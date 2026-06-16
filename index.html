@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>50/30/20 收支分析</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px}
+.container{max-width:700px;margin:0 auto;padding:1.25rem}
+h1{font-size:17px;font-weight:600;margin-bottom:1.25rem;color:#111}
+.top-bar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.income-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem;flex:1;min-width:200px}
+.income-bar label{font-size:13px;color:#666;white-space:nowrap}
+.income-bar .currency{font-size:17px;font-weight:600;color:#aaa}
+.income-bar input{flex:1;border:none;font-size:17px;font-weight:600;color:#111;outline:none;background:transparent;min-width:0}
+.io-btns{display:flex;gap:6px}
+.btn{border:1px solid #e0e0dc;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;color:#444;white-space:nowrap}
+.btn:hover{background:#f5f5f3;border-color:#bbb}
+.btn.primary{background:#378ADD;color:#fff;border-color:#378ADD}
+.btn.primary:hover{background:#2d6fb5}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.sum-card{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem}
+.sum-card .lbl{font-size:11px;color:#999;margin-bottom:2px}
+.sum-card .val{font-size:17px;font-weight:600}
+.sum-card .sub{font-size:11px;color:#aaa;margin-top:1px}
+.stacked-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-bottom:.5rem;border:1px solid #e0e0dc}
+.seg{transition:width .3s}
+.legend{display:flex;gap:14px;margin-bottom:1rem;font-size:12px;color:#666;flex-wrap:wrap}
+.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+.cat-card{background:#fff;border:1px solid #e0e0dc;border-radius:12px;padding:1rem;margin-bottom:.75rem}
+.cat-head{display:flex;align-items:center;gap:8px;margin-bottom:.4rem}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cat-name{font-size:14px;font-weight:600;flex:1}
+.pct-badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;color:#fff}
+.cat-sub{font-size:11px;color:#aaa;margin-bottom:.6rem}
+.slider-wrap{display:flex;align-items:center;gap:10px;margin-bottom:.65rem}
+.slider-wrap input[type=range]{flex:1;accent-color:var(--ac)}
+.pct-num{width:44px;text-align:right;font-size:13px;font-weight:500;color:#555}
+.budget-row{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:.5rem}
+.progress-bg{height:5px;background:#f0efed;border-radius:3px;margin-bottom:.75rem;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.items{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
+.item-row{display:flex;gap:6px;align-items:center}
+.item-row input[type=text]{flex:1;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111}
+.item-row input[type=text]:focus{border-color:#aaa;background:#fff}
+.item-row input[type=number]{width:96px;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111;text-align:right}
+.item-row input[type=number]:focus{border-color:#aaa;background:#fff}
+.del-btn{width:24px;height:24px;border:none;background:none;cursor:pointer;color:#ccc;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0}
+.del-btn:hover{color:#e24b4a;background:#fef0f0}
+.add-btn{border:1px dashed #ddd;background:none;border-radius:7px;padding:5px 10px;font-size:12px;color:#aaa;cursor:pointer;width:100%;text-align:left}
+.add-btn:hover{background:#fafafa;color:#555;border-color:#aaa}
+.warn{font-size:11px;color:#e24b4a;margin-bottom:.5rem;padding:6px 10px;background:#fef0f0;border-radius:7px;display:none}
+.over-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#fef0f0;color:#e24b4a}
+.ok-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#eaf3de;color:#3B6D11}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#222;color:#fff;font-size:13px;padding:8px 16px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>💰 收支分析 50 / 30 / 20</h1>
+  <div class="top-bar">
+    <div class="income-bar">
+      <label>月收入</label>
+      <span class="currency">NT$</span>
+      <input type="number" id="income" value="50000" step="1000" min="0" placeholder="0">
+    </div>
+    <div class="io-btns">
+      <button class="btn primary" id="exportBtn">⬇ 匯出 CSV</button>
+      <button class="btn" id="importBtn">⬆ 匯入 CSV</button>
+      <input type="file" id="fileInput" accept=".csv">
+    </div>
+  </div>
+
+  <div id="warn" class="warn">⚠️ 比例總和必須為 100%，目前為 <span id="warn-val"></span>%</div>
+
+  <div class="summary">
+    <div class="sum-card"><div class="lbl">月收入</div><div class="val" id="s-inc">NT$50,000</div></div>
+    <div class="sum-card"><div class="lbl">總支出</div><div class="val" id="s-spend">NT$0</div></div>
+    <div class="sum-card"><div class="lbl">結餘</div><div class="val" id="s-left">NT$50,000</div><div class="sub" id="s-left-sub">100%</div></div>
+  </div>
+
+  <div class="stacked-bar">
+    <div class="seg" id="bar-n" style="width:50%;background:#378ADD"></div>
+    <div class="seg" id="bar-w" style="width:30%;background:#1D9E75"></div>
+    <div class="seg" id="bar-s" style="width:20%;background:#D85A30"></div>
+  </div>
+  <div class="legend">
+    <span><span class="legend-dot" style="background:#378ADD"></span>必要支出 Needs</span>
+    <span><span class="legend-dot" style="background:#1D9E75"></span>想要支出 Wants</span>
+    <span><span class="legend-dot" style="background:#D85A30"></span>儲蓄/投資 Savings</span>
+  </div>
+
+  <div id="cats"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS=[
+  {id:'n',label:'必要支出',sub:'Needs — 房租・伙食・水電・交通・保險',color:'#378ADD',pct:50,items:[]},
+  {id:'w',label:'想要支出',sub:'Wants — 聚餐・娛樂・購物・旅遊',color:'#1D9E75',pct:30,items:[]},
+  {id:'s',label:'儲蓄與投資',sub:'Savings — 緊急預備金・股票・退休金',color:'#D85A30',pct:20,items:[]}
+];
+
+const fmt=n=>'NT$'+Math.round(n).toLocaleString();
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const income=()=>parseFloat(document.getElementById('income').value)||0;
+const catBudget=c=>income()*c.pct/100;
+const catSpent=c=>c.items.reduce((a,i)=>a+(parseFloat(i.amount)||0),0);
+
+/* ── TOAST ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ── UPDATE SUMMARY ONLY (no DOM rebuild) ── */
+function updateSummary(){
+  const inc=income();
+  let total=0; CATS.forEach(c=>total+=catSpent(c));
+  const left=inc-total;
+  const totalPct=CATS.reduce((a,c)=>a+c.pct,0);
+
+  document.getElementById('s-inc').textContent=fmt(inc);
+  document.getElementById('s-spend').textContent=fmt(total);
+  const lEl=document.getElementById('s-left');
+  lEl.textContent=fmt(left);
+  lEl.style.color=left<0?'#e24b4a':'#1a1a1a';
+  document.getElementById('s-left-sub').textContent=inc?Math.round(left/inc*100)+'%':'—';
+
+  ['n','w','s'].forEach((id,i)=>{document.getElementById('bar-'+id).style.width=CATS[i].pct+'%';});
+
+  const wEl=document.getElementById('warn');
+  if(totalPct!==100){wEl.style.display='block';document.getElementById('warn-val').textContent=totalPct;}
+  else wEl.style.display='none';
+
+  // update per-cat stats without rebuilding items DOM
+  CATS.forEach((cat,ci)=>{
+    const card=document.getElementById('cat-card-'+ci);
+    if(!card) return;
+    const budget=catBudget(cat);
+    const spent=catSpent(cat);
+    const over=spent>budget;
+    const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
+
+    const tag=card.querySelector('.status-tag');
+    tag.className='status-tag '+(over?'over-tag':'ok-tag');
+    tag.textContent=over?'超支':'尚可';
+
+    const badge=card.querySelector('.pct-badge');
+    badge.textContent=cat.pct+'%';
+
+    const slider=card.querySelector('input[type=range]');
+    if(slider) slider.value=cat.pct;
+    const pctNum=card.querySelector('.pct-num');
+    if(pctNum) pctNum.textContent=cat.pct+'%';
+
+    const bBudget=card.querySelector('.b-budget');
+    const bSpent=card.querySelector('.b-spent');
+    const bLeft=card.querySelector('.b-left');
+    if(bBudget) bBudget.textContent=fmt(budget);
+    if(bSpent){bSpent.textContent=fmt(spent);bSpent.style.color=over?'#e24b4a':cat.color;}
+    if(bLeft) bLeft.textContent='剩餘 '+fmt(budget-spent);
+
+    const pf=card.querySelector('.progress-fill');
+    if(pf){pf.style.width=pctUsed+'%';pf.style.background=over?'#e24b4a':cat.color;}
+  });
+}
+
+/* ── FULL RENDER (rebuilds cat cards + items) ── */
+function render(){
+  updateSummary();
+  renderCats();
+}
+
+function renderCats(){
+  const el=document.getElementById('cats');
+  el.innerHTML='';
+  CATS.forEach((cat,ci)=>{
+    const budget=catBudget(cat);
+    const spent=catSpent(cat);
+    const over=spent>budget;
+    const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
+
+    const card=document.createElement('div');
+    card.className='cat-card';
+    card.id='cat-card-'+ci;
+    card.innerHTML=`
+      <div class="cat-head">
+        <span class="dot" style="background:${cat.color}"></span>
+        <span class="cat-name">${cat.label}</span>
+        <span class="pct-badge" style="background:${cat.color}">${cat.pct}%</span>
+        <span class="status-tag ${over?'over-tag':'ok-tag'}">${over?'超支':'尚可'}</span>
+      </div>
+      <div class="cat-sub">${cat.sub}</div>
+      <div class="slider-wrap" style="--ac:${cat.color}">
+        <input type="range" min="0" max="100" step="1" value="${cat.pct}" data-ci="${ci}">
+        <span class="pct-num">${cat.pct}%</span>
+      </div>
+      <div class="budget-row">
+        <span>預算 <strong class="b-budget">${fmt(budget)}</strong></span>
+        <span>支出 <strong class="b-spent" style="color:${over?'#e24b4a':cat.color}">${fmt(spent)}</strong></span>
+        <span class="b-left">剩餘 ${fmt(budget-spent)}</span>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${pctUsed}%;background:${over?'#e24b4a':cat.color}"></div></div>
+      <div class="items" id="items-${ci}">
+        ${cat.items.map((item,ii)=>`
+          <div class="item-row" id="item-${ci}-${ii}">
+            <input type="text" value="${esc(item.title||'')}" placeholder="說明／標題" data-ci="${ci}" data-ii="${ii}" data-f="title">
+            <input type="number" value="${item.amount||''}" placeholder="金額" min="0" step="100" data-ci="${ci}" data-ii="${ii}" data-f="amount">
+            <button class="del-btn" data-del="${ci}-${ii}" title="刪除">✕</button>
+          </div>`).join('')}
+      </div>
+      <button class="add-btn" data-add="${ci}">＋ 新增項目</button>`;
+    el.appendChild(card);
+  });
+  attachEvents();
+}
+
+function attachEvents(){
+  const el=document.getElementById('cats');
+
+  // slider → clamp others → updateSummary (no DOM rebuild)
+  el.querySelectorAll('input[type=range]').forEach(r=>{
+    r.addEventListener('input',e=>{
+      const ci=+e.target.dataset.ci;
+      CATS[ci].pct=parseInt(e.target.value);
+      clampOthers(ci);
+      updateSummary();
+    });
+  });
+
+  // text/number item fields → update data model only → updateSummary (no DOM rebuild)
+  el.querySelectorAll('input[data-f]').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const ci=+e.target.dataset.ci, ii=+e.target.dataset.ii, f=e.target.dataset.f;
+      CATS[ci].items[ii][f]=e.target.value;
+      updateSummary(); // lightweight: no DOM rebuild
+    });
+  });
+
+  // delete → full rebuild needed
+  el.querySelectorAll('button[data-del]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const[ci,ii]=btn.dataset.del.split('-').map(Number);
+      CATS[ci].items.splice(ii,1);
+      render();
+    });
+  });
+
+  // add → full rebuild needed
+  el.querySelectorAll('button[data-add]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      CATS[+btn.dataset.add].items.push({title:'',amount:''});
+      render();
+    });
+  });
+}
+
+function clampOthers(changed){
+  const total=CATS.reduce((a,c)=>a+c.pct,0);
+  if(total===100) return;
+  const others=[0,1,2].filter(i=>i!==changed);
+  let excess=total-100;
+  for(let i=others.length-1;i>=0&&excess!==0;i--){
+    const idx=others[i];
+    const take=Math.max(-CATS[idx].pct,Math.min(excess,CATS[idx].pct));
+    CATS[idx].pct=Math.max(0,CATS[idx].pct-take);
+    excess-=take;
+  }
+}
+
+/* ── EXPORT ── */
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  const inc=income();
+  const rows=[
+    ['50/30/20 收支分析表'],
+    ['月收入',inc],
+    [],
+    ['類別','比例(%)','預算(NT$)','說明','金額(NT$)']
+  ];
+  CATS.forEach(cat=>{
+    const budget=catBudget(cat);
+    if(cat.items.length===0){
+      rows.push([cat.label,cat.pct,Math.round(budget),'','']);
+    } else {
+      cat.items.forEach((item,i)=>{
+        rows.push([
+          i===0?cat.label:'',
+          i===0?cat.pct:'',
+          i===0?Math.round(budget):'',
+          item.title||'',
+          parseFloat(item.amount)||0
+        ]);
+      });
+    }
+  });
+  // summary rows at the bottom (these are NOT under any category)
+  rows.push([]);
+  rows.push(['[摘要]','','','總支出',Math.round(CATS.reduce((a,c)=>a+catSpent(c),0))]);
+  rows.push(['[摘要]','','','結餘',Math.round(inc-CATS.reduce((a,c)=>a+catSpent(c),0))]);
+
+  const csv=rows.map(r=>r.map(v=>{
+    const s=String(v);
+    return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;
+  }).join(',')).join('\r\n');
+
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  const now=new Date();
+  const ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.download=`收支分析_${ds}.csv`; a.click(); URL.revokeObjectURL(url);
+  showToast('✅ 已匯出 CSV');
+});
+
+/* ── IMPORT ── */
+document.getElementById('importBtn').addEventListener('click',()=>{document.getElementById('fileInput').click();});
+
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=evt=>{
+    try{
+      let text=evt.target.result;
+      if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+      const lines=text.split(/\r?\n/).map(parseCSVLine);
+
+      const catMap={'必要支出':0,'想要支出':1,'儲蓄與投資':2};
+      // skip labels: rows whose col[3] starts with these are summary/header, not items
+      const SKIP_DESC=['總支出','結餘','說明'];
+
+      let inc=0;
+      const newPcts=[50,30,20];
+      const newItems=[[],[],[]];
+      let lastCI=undefined;
+
+      lines.forEach(cols=>{
+        if(!cols||cols.length<2) return;
+        if(cols[0]==='月收入'){inc=parseFloat(cols[1])||0; return;}
+        // detect category rows (col[0] matches a known category)
+        if(catMap[cols[0]]!==undefined){
+          lastCI=catMap[cols[0]];
+          if(cols[1]!=='') newPcts[lastCI]=parseFloat(cols[1])||newPcts[lastCI];
+        }
+        // skip summary rows: col[0] is '[摘要]' or description is a known skip label
+        if(cols[0]==='[摘要]') return;
+        if(SKIP_DESC.includes(cols[3])) return;
+        // add item if there's a description or amount and we know the current category
+        if(lastCI!==undefined && cols.length>=5 && (cols[3]!==''||cols[4]!=='')){
+          newItems[lastCI].push({title:cols[3], amount:cols[4]||''});
+        }
+      });
+
+      if(inc) document.getElementById('income').value=inc;
+      CATS.forEach((cat,ci)=>{cat.pct=newPcts[ci]; cat.items=newItems[ci];});
+      render();
+      showToast('✅ 匯入成功');
+    } catch(err){
+      showToast('❌ 匯入失敗，請確認 CSV 格式');
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+});
+
+function parseCSVLine(line){
+  const res=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){res.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  res.push(cur.trim());
+  return res;
+}
+
+document.getElementById('income').addEventListener('input',updateSummary);
+render();
+</script>
+</body>
+</html>
