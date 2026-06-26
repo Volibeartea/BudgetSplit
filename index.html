@@ -3,22 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>50/30/20 收支分析</title>
+<title>BudgetSplit</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px}
 .container{max-width:700px;margin:0 auto;padding:1.25rem}
-h1{font-size:17px;font-weight:600;margin-bottom:1.25rem;color:#111}
-.top-bar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+h1{font-size:17px;font-weight:600;margin-bottom:1rem;color:#111}
+.top-bar{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
 .income-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem;flex:1;min-width:200px}
 .income-bar label{font-size:13px;color:#666;white-space:nowrap}
 .income-bar .currency{font-size:17px;font-weight:600;color:#aaa}
 .income-bar input{flex:1;border:none;font-size:17px;font-weight:600;color:#111;outline:none;background:transparent;min-width:0}
-.io-btns{display:flex;gap:6px}
+.io-btns{display:flex;gap:6px;flex-wrap:wrap}
 .btn{border:1px solid #e0e0dc;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;color:#444;white-space:nowrap}
 .btn:hover{background:#f5f5f3;border-color:#bbb}
 .btn.primary{background:#378ADD;color:#fff;border-color:#378ADD}
 .btn.primary:hover{background:#2d6fb5}
+
+/* slots */
+.slots-label{font-size:11px;color:#999;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.save-indicator{font-size:11px;color:#3B6D11;opacity:0;transition:opacity .4s}
+.save-indicator.show{opacity:1}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+.slot{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem .8rem;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.slot:hover{border-color:#aaa}
+.slot.active{border:2px solid #378ADD;background:#f0f7ff}
+.slot-name-input{width:100%;border:none;font-size:13px;font-weight:600;color:#111;background:transparent;outline:none;cursor:pointer;padding:0;margin-bottom:3px}
+.slot.active .slot-name-input{cursor:text}
+.slot-meta{font-size:10px;color:#bbb}
+.slot-actions{display:flex;gap:4px;margin-top:6px}
+.slot-btn{border:1px solid #e8e8e5;background:none;border-radius:6px;padding:2px 7px;font-size:10px;color:#888;cursor:pointer}
+.slot-btn:hover{background:#f5f5f3;color:#333}
+.slot-btn.danger:hover{background:#fef0f0;color:#e24b4a;border-color:#f5c4c4}
+
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
 .sum-card{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem}
 .sum-card .lbl{font-size:11px;color:#999;margin-bottom:2px}
@@ -35,7 +52,9 @@ h1{font-size:17px;font-weight:600;margin-bottom:1.25rem;color:#111}
 .pct-badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;color:#fff}
 .cat-sub{font-size:11px;color:#aaa;margin-bottom:.6rem}
 .slider-wrap{display:flex;align-items:center;gap:10px;margin-bottom:.65rem}
-.slider-wrap input[type=range]{flex:1;accent-color:var(--ac)}
+.slider-wrap input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer}
+.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--ac)}
+.slider-wrap input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ac);cursor:pointer;box-shadow:0 0 0 1px var(--ac);border:none}
 .pct-num{width:44px;text-align:right;font-size:13px;font-weight:500;color:#555}
 .budget-row{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:.5rem}
 .progress-bg{height:5px;background:#f0efed;border-radius:3px;margin-bottom:.75rem;overflow:hidden}
@@ -60,7 +79,8 @@ input[type=file]{display:none}
 </head>
 <body>
 <div class="container">
-  <h1>💰 收支分析 50 / 30 / 20</h1>
+  <h1>💰 BudgetSplit</h1>
+
   <div class="top-bar">
     <div class="income-bar">
       <label>月收入</label>
@@ -74,7 +94,14 @@ input[type=file]{display:none}
     </div>
   </div>
 
-  <div id="warn" class="warn">⚠️ 比例總和必須為 100%，目前為 <span id="warn-val"></span>%</div>
+  <!-- slots -->
+  <div class="slots-label">
+    <span>存檔欄位</span>
+    <span class="save-indicator" id="saveIndicator">✓ 資料已保存至本地</span>
+  </div>
+  <div class="slots" id="slots"></div>
+
+  <div id="warn" class="warn" style="display:none">⚠️ 比例總和目前為 <span id="warn-val"></span>%，請調整至 100%</div>
 
   <div class="summary">
     <div class="sum-card"><div class="lbl">月收入</div><div class="val" id="s-inc">NT$50,000</div></div>
@@ -98,26 +125,134 @@ input[type=file]{display:none}
 <div class="toast" id="toast"></div>
 
 <script>
-const CATS=[
-  {id:'n',label:'必要支出',sub:'Needs — 房租・伙食・水電・交通・保險',color:'#378ADD',pct:50,items:[]},
-  {id:'w',label:'想要支出',sub:'Wants — 聚餐・娛樂・購物・旅遊',color:'#1D9E75',pct:30,items:[]},
-  {id:'s',label:'儲蓄與投資',sub:'Savings — 緊急預備金・股票・退休金',color:'#D85A30',pct:20,items:[]}
+const COLORS=['#378ADD','#1D9E75','#D85A30'];
+const CAT_DEFS=[
+  {id:'n',label:'必要支出',sub:'Needs — 房租・伙食・水電・交通・保險',color:'#378ADD'},
+  {id:'w',label:'想要支出',sub:'Wants — 聚餐・娛樂・購物・旅遊',color:'#1D9E75'},
+  {id:'s',label:'儲蓄與投資',sub:'Savings — 緊急預備金・股票・退休金',color:'#D85A30'}
 ];
+const SLOT_COUNT=3;
+const LS_KEY='budgetsplit_slots';
+const LS_ACTIVE='budgetsplit_active';
 
+/* ── STATE ── */
+let CATS=makeCats();
+let activeSlot=0;
+let slots=loadSlots();
+let saveTimer=null;
+
+function makeCats(){
+  return CAT_DEFS.map(d=>({...d,pct:d.id==='n'?50:d.id==='w'?30:20,items:[]}));
+}
+
+function defaultSlot(i){
+  return {name:`存檔 ${i+1}`,savedAt:null,income:50000,cats:makeCats()};
+}
+
+function loadSlots(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const arr=JSON.parse(raw);
+      while(arr.length<SLOT_COUNT) arr.push(defaultSlot(arr.length));
+      return arr.slice(0,SLOT_COUNT);
+    }
+  }catch(e){}
+  return Array.from({length:SLOT_COUNT},(_,i)=>defaultSlot(i));
+}
+
+function saveSlots(){
+  slots[activeSlot].income=income();
+  slots[activeSlot].cats=JSON.parse(JSON.stringify(CATS));
+  slots[activeSlot].savedAt=new Date().toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
+  localStorage.setItem(LS_ACTIVE,activeSlot);
+  showSaveIndicator();
+  renderSlots();
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveSlots,800);
+}
+
+function showSaveIndicator(){
+  const el=document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2000);
+}
+
+function loadSlot(i){
+  activeSlot=i;
+  const s=slots[i];
+  document.getElementById('income').value=s.income||50000;
+  CATS=JSON.parse(JSON.stringify(s.cats||makeCats()));
+  localStorage.setItem(LS_ACTIVE,i);
+  renderSlots();
+  render();
+}
+
+/* ── SLOTS UI ── */
+function renderSlots(){
+  const el=document.getElementById('slots');
+  el.innerHTML='';
+  slots.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='slot'+(i===activeSlot?' active':'');
+    div.innerHTML=`
+      <input class="slot-name-input" type="text" value="${esc(s.name)}" placeholder="存檔名稱" data-slot="${i}" ${i!==activeSlot?'readonly':''}/>
+      <div class="slot-meta">${s.savedAt?'上次儲存 '+s.savedAt:'尚未儲存'}</div>
+      <div class="slot-actions">
+        ${i!==activeSlot?`<button class="slot-btn" data-load="${i}">載入</button>`:'<span style="font-size:10px;color:#378ADD;font-weight:500">使用中</span>'}
+        <button class="slot-btn danger" data-clear="${i}">清除</button>
+      </div>`;
+    el.appendChild(div);
+  });
+
+  el.querySelectorAll('.slot-name-input').forEach(inp=>{
+    inp.addEventListener('input',e=>{
+      const i=+e.target.dataset.slot;
+      slots[i].name=e.target.value;
+      try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
+    });
+    inp.addEventListener('click',e=>{
+      const i=+e.target.dataset.slot;
+      if(i!==activeSlot) loadSlot(i);
+    });
+  });
+  el.querySelectorAll('button[data-load]').forEach(btn=>{
+    btn.addEventListener('click',()=>loadSlot(+btn.dataset.load));
+  });
+  el.querySelectorAll('button[data-clear]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const i=+btn.dataset.clear;
+      slots[i]={...defaultSlot(i),name:slots[i].name};
+      try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
+      if(i===activeSlot) loadSlot(i);
+      else renderSlots();
+    });
+  });
+}
+
+/* ── HELPERS ── */
 const fmt=n=>'NT$'+Math.round(n).toLocaleString();
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const income=()=>parseFloat(document.getElementById('income').value)||0;
 const catBudget=c=>income()*c.pct/100;
 const catSpent=c=>c.items.reduce((a,i)=>a+(parseFloat(i.amount)||0),0);
 
-/* ── TOAST ── */
 function showToast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
+  t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-/* ── UPDATE SUMMARY ONLY (no DOM rebuild) ── */
+function setSliderFill(slider,color){
+  const pct=parseInt(slider.value);
+  slider.style.background=`linear-gradient(to right,${color} 0%,${color} ${pct}%,#e8e8e5 ${pct}%,#e8e8e5 100%)`;
+}
+
+/* ── SUMMARY UPDATE (no DOM rebuild) ── */
 function updateSummary(){
   const inc=income();
   let total=0; CATS.forEach(c=>total+=catSpent(c));
@@ -130,64 +265,45 @@ function updateSummary(){
   lEl.textContent=fmt(left);
   lEl.style.color=left<0?'#e24b4a':'#1a1a1a';
   document.getElementById('s-left-sub').textContent=inc?Math.round(left/inc*100)+'%':'—';
-
   ['n','w','s'].forEach((id,i)=>{document.getElementById('bar-'+id).style.width=CATS[i].pct+'%';});
 
   const wEl=document.getElementById('warn');
   if(totalPct!==100){wEl.style.display='block';document.getElementById('warn-val').textContent=totalPct;}
   else wEl.style.display='none';
 
-  // update per-cat stats without rebuilding items DOM
   CATS.forEach((cat,ci)=>{
     const card=document.getElementById('cat-card-'+ci);
     if(!card) return;
-    const budget=catBudget(cat);
-    const spent=catSpent(cat);
-    const over=spent>budget;
+    const budget=catBudget(cat),spent=catSpent(cat),over=spent>budget;
     const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
-
     const tag=card.querySelector('.status-tag');
     tag.className='status-tag '+(over?'over-tag':'ok-tag');
     tag.textContent=over?'超支':'尚可';
-
-    const badge=card.querySelector('.pct-badge');
-    badge.textContent=cat.pct+'%';
-
-    const slider=card.querySelector('input[type=range]');
-    if(slider) slider.value=cat.pct;
-    const pctNum=card.querySelector('.pct-num');
-    if(pctNum) pctNum.textContent=cat.pct+'%';
-
-    const bBudget=card.querySelector('.b-budget');
-    const bSpent=card.querySelector('.b-spent');
-    const bLeft=card.querySelector('.b-left');
-    if(bBudget) bBudget.textContent=fmt(budget);
-    if(bSpent){bSpent.textContent=fmt(spent);bSpent.style.color=over?'#e24b4a':cat.color;}
-    if(bLeft) bLeft.textContent='剩餘 '+fmt(budget-spent);
-
+    card.querySelector('.pct-badge').textContent=cat.pct+'%';
+    const sl=card.querySelector('input[type=range]');
+    if(sl){sl.value=cat.pct;setSliderFill(sl,cat.color);}
+    card.querySelector('.pct-num').textContent=cat.pct+'%';
+    const bB=card.querySelector('.b-budget'),bS=card.querySelector('.b-spent'),bL=card.querySelector('.b-left');
+    if(bB) bB.textContent=fmt(budget);
+    if(bS){bS.textContent=fmt(spent);bS.style.color=over?'#e24b4a':cat.color;}
+    if(bL) bL.textContent='剩餘 '+fmt(budget-spent);
     const pf=card.querySelector('.progress-fill');
     if(pf){pf.style.width=pctUsed+'%';pf.style.background=over?'#e24b4a':cat.color;}
   });
+
+  scheduleSave();
 }
 
-/* ── FULL RENDER (rebuilds cat cards + items) ── */
-function render(){
-  updateSummary();
-  renderCats();
-}
+function render(){updateSummary();renderCats();}
 
 function renderCats(){
   const el=document.getElementById('cats');
   el.innerHTML='';
   CATS.forEach((cat,ci)=>{
-    const budget=catBudget(cat);
-    const spent=catSpent(cat);
-    const over=spent>budget;
+    const budget=catBudget(cat),spent=catSpent(cat),over=spent>budget;
     const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
-
     const card=document.createElement('div');
-    card.className='cat-card';
-    card.id='cat-card-'+ci;
+    card.className='cat-card'; card.id='cat-card-'+ci;
     card.innerHTML=`
       <div class="cat-head">
         <span class="dot" style="background:${cat.color}"></span>
@@ -206,9 +322,9 @@ function renderCats(){
         <span class="b-left">剩餘 ${fmt(budget-spent)}</span>
       </div>
       <div class="progress-bg"><div class="progress-fill" style="width:${pctUsed}%;background:${over?'#e24b4a':cat.color}"></div></div>
-      <div class="items" id="items-${ci}">
+      <div class="items">
         ${cat.items.map((item,ii)=>`
-          <div class="item-row" id="item-${ci}-${ii}">
+          <div class="item-row">
             <input type="text" value="${esc(item.title||'')}" placeholder="說明／標題" data-ci="${ci}" data-ii="${ii}" data-f="title">
             <input type="number" value="${item.amount||''}" placeholder="金額" min="0" step="100" data-ci="${ci}" data-ii="${ii}" data-f="amount">
             <button class="del-btn" data-del="${ci}-${ii}" title="刪除">✕</button>
@@ -216,171 +332,106 @@ function renderCats(){
       </div>
       <button class="add-btn" data-add="${ci}">＋ 新增項目</button>`;
     el.appendChild(card);
+    setSliderFill(card.querySelector('input[type=range]'),cat.color);
   });
   attachEvents();
 }
 
 function attachEvents(){
   const el=document.getElementById('cats');
-
-  // slider → clamp others → updateSummary (no DOM rebuild)
   el.querySelectorAll('input[type=range]').forEach(r=>{
     r.addEventListener('input',e=>{
-      const ci=+e.target.dataset.ci;
-      CATS[ci].pct=parseInt(e.target.value);
-      clampOthers(ci);
+      CATS[+e.target.dataset.ci].pct=parseInt(e.target.value);
+      setSliderFill(e.target,CATS[+e.target.dataset.ci].color);
       updateSummary();
     });
   });
-
-  // text/number item fields → update data model only → updateSummary (no DOM rebuild)
   el.querySelectorAll('input[data-f]').forEach(inp=>{
     inp.addEventListener('input',e=>{
-      const ci=+e.target.dataset.ci, ii=+e.target.dataset.ii, f=e.target.dataset.f;
-      CATS[ci].items[ii][f]=e.target.value;
-      updateSummary(); // lightweight: no DOM rebuild
+      CATS[+e.target.dataset.ci].items[+e.target.dataset.ii][e.target.dataset.f]=e.target.value;
+      updateSummary();
     });
   });
-
-  // delete → full rebuild needed
   el.querySelectorAll('button[data-del]').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const[ci,ii]=btn.dataset.del.split('-').map(Number);
-      CATS[ci].items.splice(ii,1);
-      render();
+      CATS[ci].items.splice(ii,1); render();
     });
   });
-
-  // add → full rebuild needed
   el.querySelectorAll('button[data-add]').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      CATS[+btn.dataset.add].items.push({title:'',amount:''});
-      render();
+      CATS[+btn.dataset.add].items.push({title:'',amount:''}); render();
     });
   });
-}
-
-function clampOthers(changed){
-  const total=CATS.reduce((a,c)=>a+c.pct,0);
-  if(total===100) return;
-  const others=[0,1,2].filter(i=>i!==changed);
-  let excess=total-100;
-  for(let i=others.length-1;i>=0&&excess!==0;i--){
-    const idx=others[i];
-    const take=Math.max(-CATS[idx].pct,Math.min(excess,CATS[idx].pct));
-    CATS[idx].pct=Math.max(0,CATS[idx].pct-take);
-    excess-=take;
-  }
 }
 
 /* ── EXPORT ── */
 document.getElementById('exportBtn').addEventListener('click',()=>{
   const inc=income();
-  const rows=[
-    ['50/30/20 收支分析表'],
-    ['月收入',inc],
-    [],
-    ['類別','比例(%)','預算(NT$)','說明','金額(NT$)']
-  ];
+  const rows=[['50/30/20 收支分析表'],['月收入',inc],[],['類別','比例(%)','預算(NT$)','說明','金額(NT$)']];
   CATS.forEach(cat=>{
     const budget=catBudget(cat);
-    if(cat.items.length===0){
-      rows.push([cat.label,cat.pct,Math.round(budget),'','']);
-    } else {
-      cat.items.forEach((item,i)=>{
-        rows.push([
-          i===0?cat.label:'',
-          i===0?cat.pct:'',
-          i===0?Math.round(budget):'',
-          item.title||'',
-          parseFloat(item.amount)||0
-        ]);
-      });
-    }
+    if(!cat.items.length){rows.push([cat.label,cat.pct,Math.round(budget),'','']);}
+    else cat.items.forEach((item,i)=>rows.push([i===0?cat.label:'',i===0?cat.pct:'',i===0?Math.round(budget):'',item.title||'',parseFloat(item.amount)||0]));
   });
-  // summary rows at the bottom (these are NOT under any category)
-  rows.push([]);
-  rows.push(['[摘要]','','','總支出',Math.round(CATS.reduce((a,c)=>a+catSpent(c),0))]);
+  rows.push([],['[摘要]','','','總支出',Math.round(CATS.reduce((a,c)=>a+catSpent(c),0))]);
   rows.push(['[摘要]','','','結餘',Math.round(inc-CATS.reduce((a,c)=>a+catSpent(c),0))]);
-
-  const csv=rows.map(r=>r.map(v=>{
-    const s=String(v);
-    return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s;
-  }).join(',')).join('\r\n');
-
+  const csv=rows.map(r=>r.map(v=>{const s=String(v);return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url;
-  const now=new Date();
-  const ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  a.download=`收支分析_${ds}.csv`; a.click(); URL.revokeObjectURL(url);
+  const a=document.createElement('a');a.href=url;
+  const now=new Date(),ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.download=`BudgetSplit_${ds}.csv`;a.click();URL.revokeObjectURL(url);
   showToast('✅ 已匯出 CSV');
 });
 
 /* ── IMPORT ── */
-document.getElementById('importBtn').addEventListener('click',()=>{document.getElementById('fileInput').click();});
-
+document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
 document.getElementById('fileInput').addEventListener('change',e=>{
-  const file=e.target.files[0]; if(!file) return;
+  const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=evt=>{
     try{
       let text=evt.target.result;
-      if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+      if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
       const lines=text.split(/\r?\n/).map(parseCSVLine);
-
       const catMap={'必要支出':0,'想要支出':1,'儲蓄與投資':2};
-      // skip labels: rows whose col[3] starts with these are summary/header, not items
-      const SKIP_DESC=['總支出','結餘','說明'];
-
-      let inc=0;
-      const newPcts=[50,30,20];
-      const newItems=[[],[],[]];
-      let lastCI=undefined;
-
+      const SKIP=['總支出','結餘','說明'];
+      let inc=0,lastCI=undefined;
+      const newPcts=[50,30,20],newItems=[[],[],[]];
       lines.forEach(cols=>{
-        if(!cols||cols.length<2) return;
-        if(cols[0]==='月收入'){inc=parseFloat(cols[1])||0; return;}
-        // detect category rows (col[0] matches a known category)
-        if(catMap[cols[0]]!==undefined){
-          lastCI=catMap[cols[0]];
-          if(cols[1]!=='') newPcts[lastCI]=parseFloat(cols[1])||newPcts[lastCI];
-        }
-        // skip summary rows: col[0] is '[摘要]' or description is a known skip label
-        if(cols[0]==='[摘要]') return;
-        if(SKIP_DESC.includes(cols[3])) return;
-        // add item if there's a description or amount and we know the current category
-        if(lastCI!==undefined && cols.length>=5 && (cols[3]!==''||cols[4]!=='')){
-          newItems[lastCI].push({title:cols[3], amount:cols[4]||''});
-        }
+        if(!cols||cols.length<2)return;
+        if(cols[0]==='月收入'){inc=parseFloat(cols[1])||0;return;}
+        if(catMap[cols[0]]!==undefined){lastCI=catMap[cols[0]];if(cols[1]!=='')newPcts[lastCI]=parseFloat(cols[1])||newPcts[lastCI];}
+        if(cols[0]==='[摘要]'||SKIP.includes(cols[3]))return;
+        if(lastCI!==undefined&&cols.length>=5&&(cols[3]!==''||cols[4]!==''))newItems[lastCI].push({title:cols[3],amount:cols[4]||''});
       });
-
-      if(inc) document.getElementById('income').value=inc;
-      CATS.forEach((cat,ci)=>{cat.pct=newPcts[ci]; cat.items=newItems[ci];});
-      render();
-      showToast('✅ 匯入成功');
-    } catch(err){
-      showToast('❌ 匯入失敗，請確認 CSV 格式');
-    }
+      if(inc)document.getElementById('income').value=inc;
+      CATS.forEach((cat,ci)=>{cat.pct=newPcts[ci];cat.items=newItems[ci];});
+      render();showToast('✅ 匯入成功');
+    }catch(err){showToast('❌ 匯入失敗，請確認 CSV 格式');}
     e.target.value='';
   };
   reader.readAsText(file,'UTF-8');
 });
 
 function parseCSVLine(line){
-  const res=[];let cur='';let inQ=false;
+  const res=[];let cur='',inQ=false;
   for(let i=0;i<line.length;i++){
     const c=line[i];
     if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
     else if(c===','&&!inQ){res.push(cur.trim());cur='';}
     else cur+=c;
   }
-  res.push(cur.trim());
-  return res;
+  res.push(cur.trim());return res;
 }
 
 document.getElementById('income').addEventListener('input',updateSummary);
-render();
+
+/* ── INIT ── */
+try{activeSlot=parseInt(localStorage.getItem(LS_ACTIVE))||0;}catch(e){activeSlot=0;}
+renderSlots();
+loadSlot(activeSlot);
 </script>
 </body>
 </html>
