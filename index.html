@@ -20,7 +20,6 @@ h1{font-size:17px;font-weight:600;margin-bottom:1rem;color:#111}
 .btn.primary{background:#378ADD;color:#fff;border-color:#378ADD}
 .btn.primary:hover{background:#2d6fb5}
 
-/* slots */
 .slots-label{font-size:11px;color:#999;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
 .save-indicator{font-size:11px;color:#3B6D11;opacity:0;transition:opacity .4s}
 .save-indicator.show{opacity:1}
@@ -61,15 +60,23 @@ h1{font-size:17px;font-weight:600;margin-bottom:1rem;color:#111}
 .progress-fill{height:100%;border-radius:3px;transition:width .3s}
 .items{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
 .item-row{display:flex;gap:6px;align-items:center}
+.drag-handle{cursor:grab;color:#cfcfcc;font-size:15px;line-height:1;padding:0 2px;flex-shrink:0;user-select:none;touch-action:none}
+.drag-handle:hover{color:#888}
+.drag-handle:active{cursor:grabbing}
 .item-row input[type=text]{flex:1;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111}
 .item-row input[type=text]:focus{border-color:#aaa;background:#fff}
 .item-row input[type=number]{width:96px;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111;text-align:right}
 .item-row input[type=number]:focus{border-color:#aaa;background:#fff}
 .del-btn{width:24px;height:24px;border:none;background:none;cursor:pointer;color:#ccc;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0}
 .del-btn:hover{color:#e24b4a;background:#fef0f0}
+.sortable-ghost{opacity:.35}
+.sortable-chosen{background:#f0f7ff;border-radius:7px}
+.sortable-drag{opacity:.9}
 .add-btn{border:1px dashed #ddd;background:none;border-radius:7px;padding:5px 10px;font-size:12px;color:#aaa;cursor:pointer;width:100%;text-align:left}
 .add-btn:hover{background:#fafafa;color:#555;border-color:#aaa}
-.warn{font-size:11px;color:#e24b4a;margin-bottom:.5rem;padding:6px 10px;background:#fef0f0;border-radius:7px;display:none}
+.warn{font-size:11px;color:#e24b4a;margin-bottom:.5rem;padding:6px 10px;background:#fef0f0;border-radius:7px;display:none;align-items:center;gap:8px}
+.warn-fix{border:1px solid #e8a0a0;background:#fff;color:#c0392b;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.warn-fix:hover{background:#c0392b;color:#fff;border-color:#c0392b}
 .over-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#fef0f0;color:#e24b4a}
 .ok-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#eaf3de;color:#3B6D11}
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#222;color:#fff;font-size:13px;padding:8px 16px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
@@ -90,18 +97,18 @@ input[type=file]{display:none}
     <div class="io-btns">
       <button class="btn primary" id="exportBtn">⬇ 匯出 CSV</button>
       <button class="btn" id="importBtn">⬆ 匯入 CSV</button>
+      <button class="btn" id="snapshotBtn">📸 快照</button>
       <input type="file" id="fileInput" accept=".csv">
     </div>
   </div>
 
-  <!-- slots -->
   <div class="slots-label">
     <span>存檔欄位</span>
     <span class="save-indicator" id="saveIndicator">✓ 資料已保存至本地</span>
   </div>
   <div class="slots" id="slots"></div>
 
-  <div id="warn" class="warn" style="display:none">⚠️ 比例總和目前為 <span id="warn-val"></span>%，請調整至 100%</div>
+  <div id="warn" class="warn" style="display:none">⚠️ 比例總和目前為 <span id="warn-val"></span>%，請調整至 100% <button class="warn-fix" id="normalizeBtn">一鍵歸位</button></div>
 
   <div class="summary">
     <div class="sum-card"><div class="lbl">月收入</div><div class="val" id="s-inc">NT$50,000</div></div>
@@ -124,8 +131,8 @@ input[type=file]{display:none}
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
-const COLORS=['#378ADD','#1D9E75','#D85A30'];
 const CAT_DEFS=[
   {id:'n',label:'必要支出',sub:'Needs — 房租・伙食・水電・交通・保險',color:'#378ADD'},
   {id:'w',label:'想要支出',sub:'Wants — 聚餐・娛樂・購物・旅遊',color:'#1D9E75'},
@@ -135,20 +142,19 @@ const SLOT_COUNT=3;
 const LS_KEY='budgetsplit_slots';
 const LS_ACTIVE='budgetsplit_active';
 
-/* ── STATE ── */
 let CATS=makeCats();
 let activeSlot=0;
 let slots=loadSlots();
 let saveTimer=null;
+let lastAdjustedCI=null;
+let sortables=[];
 
 function makeCats(){
   return CAT_DEFS.map(d=>({...d,pct:d.id==='n'?50:d.id==='w'?30:20,items:[]}));
 }
-
 function defaultSlot(i){
   return {name:`存檔 ${i+1}`,savedAt:null,income:50000,cats:makeCats()};
 }
-
 function loadSlots(){
   try{
     const raw=localStorage.getItem(LS_KEY);
@@ -160,7 +166,6 @@ function loadSlots(){
   }catch(e){}
   return Array.from({length:SLOT_COUNT},(_,i)=>defaultSlot(i));
 }
-
 function saveSlots(){
   slots[activeSlot].income=income();
   slots[activeSlot].cats=JSON.parse(JSON.stringify(CATS));
@@ -170,23 +175,23 @@ function saveSlots(){
   showSaveIndicator();
   renderSlots();
 }
-
 function scheduleSave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(saveSlots,800);
 }
-
 function showSaveIndicator(){
   const el=document.getElementById('saveIndicator');
   el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),2000);
 }
-
 function loadSlot(i){
+  // 切換前先把當前存檔待儲存的資料寫入，避免 debounce 未觸發造成遺失
+  if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveSlots(); }
   activeSlot=i;
   const s=slots[i];
   document.getElementById('income').value=s.income||50000;
   CATS=JSON.parse(JSON.stringify(s.cats||makeCats()));
+  lastAdjustedCI=null;
   localStorage.setItem(LS_ACTIVE,i);
   renderSlots();
   render();
@@ -208,11 +213,9 @@ function renderSlots(){
       </div>`;
     el.appendChild(div);
   });
-
   el.querySelectorAll('.slot-name-input').forEach(inp=>{
     inp.addEventListener('input',e=>{
-      const i=+e.target.dataset.slot;
-      slots[i].name=e.target.value;
+      slots[+e.target.dataset.slot].name=e.target.value;
       try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
     });
     inp.addEventListener('click',e=>{
@@ -226,10 +229,12 @@ function renderSlots(){
   el.querySelectorAll('button[data-clear]').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const i=+btn.dataset.clear;
-      slots[i]={...defaultSlot(i),name:slots[i].name};
+      if(!confirm(`確定要清除「${slots[i].name}」嗎？此存檔的所有資料將被清空，無法復原。`)) return;
+      slots[i]={...defaultSlot(i),name:slots[i].name,savedAt:null};
       try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
       if(i===activeSlot) loadSlot(i);
       else renderSlots();
+      showToast('🗑 已清除存檔');
     });
   });
 }
@@ -246,10 +251,24 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
-
 function setSliderFill(slider,color){
   const pct=parseInt(slider.value);
   slider.style.background=`linear-gradient(to right,${color} 0%,${color} ${pct}%,#e8e8e5 ${pct}%,#e8e8e5 100%)`;
+}
+
+/* 一鍵歸位：固定最後調整過的 bar，剩餘平均分配給另外兩個 */
+function normalizePcts(){
+  const total=CATS.reduce((a,c)=>a+c.pct,0);
+  if(total===100) return;
+  let lockIdx=(lastAdjustedCI===null||lastAdjustedCI===undefined)?0:lastAdjustedCI;
+  let locked=Math.min(100,Math.max(0,CATS[lockIdx].pct));
+  CATS[lockIdx].pct=locked;
+  const remaining=100-locked;
+  const others=[0,1,2].filter(i=>i!==lockIdx);
+  const half=Math.floor(remaining/2);
+  CATS[others[0]].pct=half;
+  CATS[others[1]].pct=remaining-half;
+  render();
 }
 
 /* ── SUMMARY UPDATE (no DOM rebuild) ── */
@@ -268,7 +287,7 @@ function updateSummary(){
   ['n','w','s'].forEach((id,i)=>{document.getElementById('bar-'+id).style.width=CATS[i].pct+'%';});
 
   const wEl=document.getElementById('warn');
-  if(totalPct!==100){wEl.style.display='block';document.getElementById('warn-val').textContent=totalPct;}
+  if(totalPct!==100){wEl.style.display='flex';document.getElementById('warn-val').textContent=totalPct;}
   else wEl.style.display='none';
 
   CATS.forEach((cat,ci)=>{
@@ -297,6 +316,10 @@ function updateSummary(){
 function render(){updateSummary();renderCats();}
 
 function renderCats(){
+  // 重建前先銷毀舊的 Sortable 實例，避免記憶體洩漏與重複綁定
+  sortables.forEach(s=>{try{s.destroy();}catch(e){}});
+  sortables=[];
+
   const el=document.getElementById('cats');
   el.innerHTML='';
   CATS.forEach((cat,ci)=>{
@@ -322,9 +345,10 @@ function renderCats(){
         <span class="b-left">剩餘 ${fmt(budget-spent)}</span>
       </div>
       <div class="progress-bg"><div class="progress-fill" style="width:${pctUsed}%;background:${over?'#e24b4a':cat.color}"></div></div>
-      <div class="items">
+      <div class="items" data-ci="${ci}">
         ${cat.items.map((item,ii)=>`
           <div class="item-row">
+            <span class="drag-handle" title="拖曳排序">≡</span>
             <input type="text" value="${esc(item.title||'')}" placeholder="說明／標題" data-ci="${ci}" data-ii="${ii}" data-f="title">
             <input type="number" value="${item.amount||''}" placeholder="金額" min="0" step="100" data-ci="${ci}" data-ii="${ii}" data-f="amount">
             <button class="del-btn" data-del="${ci}-${ii}" title="刪除">✕</button>
@@ -333,6 +357,26 @@ function renderCats(){
       <button class="add-btn" data-add="${ci}">＋ 新增項目</button>`;
     el.appendChild(card);
     setSliderFill(card.querySelector('input[type=range]'),cat.color);
+
+    // 初始化此分類的拖曳排序（不設 group → 鎖死在分類內，無法跨類）
+    const itemsEl=card.querySelector('.items');
+    if(typeof Sortable!=='undefined'){
+      sortables.push(Sortable.create(itemsEl,{
+        handle:'.drag-handle',
+        animation:150,
+        ghostClass:'sortable-ghost',
+        chosenClass:'sortable-chosen',
+        dragClass:'sortable-drag',
+        onEnd:function(evt){
+          if(evt.oldIndex===evt.newIndex) return;
+          const arr=CATS[ci].items;
+          const [moved]=arr.splice(evt.oldIndex,1);
+          arr.splice(evt.newIndex,0,moved);
+          render();
+          scheduleSave();
+        }
+      }));
+    }
   });
   attachEvents();
 }
@@ -341,6 +385,7 @@ function attachEvents(){
   const el=document.getElementById('cats');
   el.querySelectorAll('input[type=range]').forEach(r=>{
     r.addEventListener('input',e=>{
+      lastAdjustedCI=+e.target.dataset.ci;
       CATS[+e.target.dataset.ci].pct=parseInt(e.target.value);
       setSliderFill(e.target,CATS[+e.target.dataset.ci].color);
       updateSummary();
@@ -365,7 +410,7 @@ function attachEvents(){
   });
 }
 
-/* ── EXPORT ── */
+/* ── EXPORT CSV ── */
 document.getElementById('exportBtn').addEventListener('click',()=>{
   const inc=income();
   const rows=[['50/30/20 收支分析表'],['月收入',inc],[],['類別','比例(%)','預算(NT$)','說明','金額(NT$)']];
@@ -381,11 +426,13 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;
   const now=new Date(),ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  a.download=`BudgetSplit_${ds}.csv`;a.click();URL.revokeObjectURL(url);
+  let slotName=(slots[activeSlot].name||'').trim().replace(/[\/\\:*?"<>|]/g,'_');
+  if(!slotName) slotName='BudgetSplit';
+  a.download=`${slotName}_${ds}.csv`;a.click();URL.revokeObjectURL(url);
   showToast('✅ 已匯出 CSV');
 });
 
-/* ── IMPORT ── */
+/* ── IMPORT CSV ── */
 document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
 document.getElementById('fileInput').addEventListener('change',e=>{
   const file=e.target.files[0];if(!file)return;
@@ -408,7 +455,15 @@ document.getElementById('fileInput').addEventListener('change',e=>{
       });
       if(inc)document.getElementById('income').value=inc;
       CATS.forEach((cat,ci)=>{cat.pct=newPcts[ci];cat.items=newItems[ci];});
-      render();showToast('✅ 匯入成功');
+      let baseName=file.name.replace(/\.csv$/i,'').replace(/_\d{8}$/,'').trim();
+      if(baseName){
+        slots[activeSlot].name=baseName;
+        try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
+      }
+      lastAdjustedCI=null;
+      render();
+      renderSlots();
+      showToast('✅ 匯入成功');
     }catch(err){showToast('❌ 匯入失敗，請確認 CSV 格式');}
     e.target.value='';
   };
@@ -426,7 +481,144 @@ function parseCSVLine(line){
   res.push(cur.trim());return res;
 }
 
+/* ── SNAPSHOT (Canvas 自繪 PNG，非截圖現有 UI) ── */
+function exportSnapshot(){
+  const inc=income();
+  const slotName=(slots[activeSlot].name||'BudgetSplit').trim();
+  const dateStr=new Date().toLocaleDateString('zh-TW');
+  const scale=2, W=600, padX=36;
+
+  const measureCtx=document.createElement('canvas').getContext('2d');
+  const H=paint(measureCtx,false,0);
+
+  const canvas=document.createElement('canvas');
+  canvas.width=W*scale; canvas.height=Math.round(H*scale);
+  const ctx=canvas.getContext('2d');
+  ctx.scale(scale,scale);
+  paint(ctx,true,H);
+
+  canvas.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url;
+    const now=new Date(), ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    let clean=slotName.replace(/[\/\\:*?"<>|]/g,'_')||'BudgetSplit';
+    a.download=`${clean}_快照_${ds}.png`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('📸 已輸出快照');
+  },'image/png');
+
+  function paint(ctx,draw,Htotal){
+    ctx.textBaseline='middle';
+    if(draw){ ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,Htotal); }
+    const fit=(text,maxW)=>{
+      if(ctx.measureText(text).width<=maxW) return text;
+      let t=text;
+      while(t.length>1 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1);
+      return t+'…';
+    };
+    let y=48;
+
+    // 標題 + 日期
+    ctx.textAlign='left';
+    ctx.font='700 24px system-ui,-apple-system,sans-serif';
+    if(draw){ ctx.fillStyle='#111'; ctx.fillText(fit(slotName,W-padX*2-170),padX,y); }
+    ctx.textAlign='right';
+    ctx.font='400 13px system-ui,sans-serif';
+    if(draw){ ctx.fillStyle='#aaa'; ctx.fillText('BudgetSplit · '+dateStr,W-padX,y); }
+    y+=30;
+
+    ctx.textAlign='left';
+    ctx.font='400 13px system-ui,sans-serif';
+    if(draw){ ctx.fillStyle='#888'; ctx.fillText('50 / 30 / 20 資產配置快照',padX,y); }
+    y+=26;
+
+    if(draw){ ctx.strokeStyle='#eeeeec'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
+    y+=28;
+
+    // 月收入
+    ctx.textAlign='left';
+    ctx.font='400 14px system-ui,sans-serif';
+    if(draw){ ctx.fillStyle='#666'; ctx.fillText('月收入',padX,y); }
+    ctx.textAlign='right';
+    ctx.font='700 18px system-ui,sans-serif';
+    if(draw){ ctx.fillStyle='#111'; ctx.fillText(fmt(inc),W-padX,y); }
+    y+=30;
+
+    // 堆疊 bar
+    const barW=W-padX*2, barH=16, barTop=y;
+    if(draw){
+      ctx.save();
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(padX,barTop,barW,barH,8); else ctx.rect(padX,barTop,barW,barH);
+      ctx.clip();
+      ctx.fillStyle='#eeeeec'; ctx.fillRect(padX,barTop,barW,barH);
+      let sx=padX;
+      CATS.forEach(c=>{
+        const w=barW*(Math.max(0,c.pct)/100);
+        ctx.fillStyle=c.color; ctx.fillRect(sx,barTop,w,barH); sx+=w;
+      });
+      ctx.restore();
+    }
+    y+=barH+30;
+
+    // 各分類
+    CATS.forEach(c=>{
+      const budget=inc*c.pct/100, spent=catSpent(c), over=spent>budget;
+      if(draw){
+        ctx.fillStyle=c.color;
+        ctx.beginPath(); ctx.arc(padX+5,y,5,0,Math.PI*2); ctx.fill();
+        ctx.textAlign='left';
+        ctx.font='600 15px system-ui,sans-serif'; ctx.fillStyle='#111';
+        ctx.fillText(c.label,padX+18,y);
+        const nameW=ctx.measureText(c.label).width;
+        ctx.font='600 13px system-ui,sans-serif'; ctx.fillStyle=c.color;
+        ctx.fillText('  '+c.pct+'%',padX+18+nameW,y);
+        ctx.textAlign='right';
+        ctx.font='400 12px system-ui,sans-serif';
+        ctx.fillStyle=over?'#e24b4a':'#777';
+        ctx.fillText('預算 '+fmt(budget)+' · 支出 '+fmt(spent),W-padX,y);
+      }
+      y+=30;
+      if(c.items.length===0){
+        if(draw){ ctx.textAlign='left'; ctx.font='400 13px system-ui,sans-serif'; ctx.fillStyle='#bbb'; ctx.fillText('（尚無項目）',padX+18,y); }
+        y+=28;
+      } else {
+        c.items.forEach(it=>{
+          if(draw){
+            ctx.textAlign='left'; ctx.font='400 13px system-ui,sans-serif'; ctx.fillStyle='#444';
+            ctx.fillText(fit(it.title||'（未命名）',barW-150),padX+18,y);
+            ctx.textAlign='right'; ctx.font='500 13px system-ui,sans-serif'; ctx.fillStyle='#222';
+            ctx.fillText(fmt(parseFloat(it.amount)||0),W-padX,y);
+          }
+          y+=28;
+        });
+      }
+      y+=8;
+      if(draw){ ctx.strokeStyle='#f2f1ef'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
+      y+=12;
+    });
+
+    // footer 總計
+    y+=6;
+    const totalSpent=CATS.reduce((a,c)=>a+catSpent(c),0), balance=inc-totalSpent;
+    if(draw){
+      ctx.textAlign='left'; ctx.font='600 14px system-ui,sans-serif'; ctx.fillStyle='#555'; ctx.fillText('總支出',padX,y);
+      ctx.textAlign='right'; ctx.font='700 16px system-ui,sans-serif'; ctx.fillStyle='#111'; ctx.fillText(fmt(totalSpent),W-padX,y);
+    }
+    y+=30;
+    if(draw){
+      ctx.textAlign='left'; ctx.font='600 14px system-ui,sans-serif'; ctx.fillStyle='#555'; ctx.fillText('結餘',padX,y);
+      ctx.textAlign='right'; ctx.font='700 18px system-ui,sans-serif'; ctx.fillStyle=balance<0?'#e24b4a':'#1D9E75'; ctx.fillText(fmt(balance),W-padX,y);
+    }
+    y+=28;
+
+    return y+24;
+  }
+}
+document.getElementById('snapshotBtn').addEventListener('click',exportSnapshot);
+
 document.getElementById('income').addEventListener('input',updateSummary);
+document.getElementById('normalizeBtn').addEventListener('click',normalizePcts);
 
 /* ── INIT ── */
 try{activeSlot=parseInt(localStorage.getItem(LS_ACTIVE))||0;}catch(e){activeSlot=0;}
