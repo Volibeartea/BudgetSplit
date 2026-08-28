@@ -2,628 +2,73 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f3">
 <title>BudgetSplit</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px}
-.container{max-width:700px;margin:0 auto;padding:1.25rem}
-h1{font-size:17px;font-weight:600;margin-bottom:1rem;color:#111}
-.top-bar{display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
-.income-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem;flex:1;min-width:200px}
-.income-bar label{font-size:13px;color:#666;white-space:nowrap}
-.income-bar .currency{font-size:17px;font-weight:600;color:#aaa}
-.income-bar input{flex:1;border:none;font-size:17px;font-weight:600;color:#111;outline:none;background:transparent;min-width:0}
-.io-btns{display:flex;gap:6px;flex-wrap:wrap}
-.btn{border:1px solid #e0e0dc;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;color:#444;white-space:nowrap}
-.btn:hover{background:#f5f5f3;border-color:#bbb}
-.btn.primary{background:#378ADD;color:#fff;border-color:#378ADD}
-.btn.primary:hover{background:#2d6fb5}
-
-.slots-label{font-size:11px;color:#999;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.save-indicator{font-size:11px;color:#3B6D11;opacity:0;transition:opacity .4s}
-.save-indicator.show{opacity:1}
-.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
-.slot{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem .8rem;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
-.slot:hover{border-color:#aaa}
-.slot.active{border:2px solid #378ADD;background:#f0f7ff}
-.slot-name-input{width:100%;border:none;font-size:13px;font-weight:600;color:#111;background:transparent;outline:none;cursor:pointer;padding:0;margin-bottom:3px}
-.slot.active .slot-name-input{cursor:text}
-.slot-meta{font-size:10px;color:#bbb}
-.slot-actions{display:flex;gap:4px;margin-top:6px}
-.slot-btn{border:1px solid #e8e8e5;background:none;border-radius:6px;padding:2px 7px;font-size:10px;color:#888;cursor:pointer}
-.slot-btn:hover{background:#f5f5f3;color:#333}
-.slot-btn.danger:hover{background:#fef0f0;color:#e24b4a;border-color:#f5c4c4}
-
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
-.sum-card{background:#fff;border:1px solid #e0e0dc;border-radius:10px;padding:.65rem 1rem}
-.sum-card .lbl{font-size:11px;color:#999;margin-bottom:2px}
-.sum-card .val{font-size:17px;font-weight:600}
-.sum-card .sub{font-size:11px;color:#aaa;margin-top:1px}
-.stacked-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-bottom:.5rem;border:1px solid #e0e0dc}
-.seg{transition:width .3s}
-.legend{display:flex;gap:14px;margin-bottom:1rem;font-size:12px;color:#666;flex-wrap:wrap}
-.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
-.cat-card{background:#fff;border:1px solid #e0e0dc;border-radius:12px;padding:1rem;margin-bottom:.75rem}
-.cat-head{display:flex;align-items:center;gap:8px;margin-bottom:.4rem}
-.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.cat-name{font-size:14px;font-weight:600;flex:1}
-.pct-badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;color:#fff}
-.cat-sub{font-size:11px;color:#aaa;margin-bottom:.6rem}
-.slider-wrap{display:flex;align-items:center;gap:10px;margin-bottom:.65rem}
-.slider-wrap input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer}
-.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--ac)}
-.slider-wrap input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ac);cursor:pointer;box-shadow:0 0 0 1px var(--ac);border:none}
-.pct-num{width:44px;text-align:right;font-size:13px;font-weight:500;color:#555}
-.budget-row{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:.5rem}
-.progress-bg{height:5px;background:#f0efed;border-radius:3px;margin-bottom:.75rem;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;transition:width .3s}
-.items{display:flex;flex-direction:column;gap:5px;margin-bottom:.5rem}
-.item-row{display:flex;gap:6px;align-items:center}
-.drag-handle{cursor:grab;color:#cfcfcc;font-size:15px;line-height:1;padding:0 2px;flex-shrink:0;user-select:none;touch-action:none}
-.drag-handle:hover{color:#888}
-.drag-handle:active{cursor:grabbing}
-.item-row input[type=text]{flex:1;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111}
-.item-row input[type=text]:focus{border-color:#aaa;background:#fff}
-.item-row input[type=number]{width:96px;border:1px solid #e0e0dc;border-radius:7px;padding:5px 8px;font-size:12px;outline:none;background:#fafafa;color:#111;text-align:right}
-.item-row input[type=number]:focus{border-color:#aaa;background:#fff}
-.del-btn{width:24px;height:24px;border:none;background:none;cursor:pointer;color:#ccc;font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:5px;flex-shrink:0}
-.del-btn:hover{color:#e24b4a;background:#fef0f0}
-.sortable-ghost{opacity:.35}
-.sortable-chosen{background:#f0f7ff;border-radius:7px}
-.sortable-drag{opacity:.9}
-.add-btn{border:1px dashed #ddd;background:none;border-radius:7px;padding:5px 10px;font-size:12px;color:#aaa;cursor:pointer;width:100%;text-align:left}
-.add-btn:hover{background:#fafafa;color:#555;border-color:#aaa}
-.warn{font-size:11px;color:#e24b4a;margin-bottom:.5rem;padding:6px 10px;background:#fef0f0;border-radius:7px;display:none;align-items:center;gap:8px}
-.warn-fix{border:1px solid #e8a0a0;background:#fff;color:#c0392b;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
-.warn-fix:hover{background:#c0392b;color:#fff;border-color:#c0392b}
-.over-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#fef0f0;color:#e24b4a}
-.ok-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:#eaf3de;color:#3B6D11}
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#222;color:#fff;font-size:13px;padding:8px 16px;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
-.toast.show{opacity:1}
-input[type=file]{display:none}
+:root{--blue:#378add;--green:#1d9e75;--orange:#d85a30;--ink:#1a1a1a;--muted:#777;--line:#e0e0dc;--paper:#fff;--bg:#f5f5f3}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;overflow-x:hidden}button,input,select{font:inherit}button{touch-action:manipulation}
+.container{max-width:760px;margin:0 auto;padding:1.25rem max(1rem,env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left))}.app-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1rem}h1{font-size:19px;font-weight:750;color:#111;letter-spacing:-.02em}.settings{display:flex;gap:6px;min-width:0}.select{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 28px 6px 9px;color:#444;font-size:12px;min-width:0}
+.top-bar{display:flex;align-items:stretch;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}.income-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:.65rem 1rem;flex:1;min-width:220px}.income-bar label{font-size:13px;color:#666;white-space:nowrap}.income-bar .currency-symbol{font-size:16px;font-weight:650;color:#999}.income-bar input{flex:1;border:none;font-size:18px;font-weight:700;color:#111;outline:none;background:transparent;min-width:0;width:100%}.io-btns{display:flex;gap:6px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;color:#444;white-space:nowrap;min-height:34px}.btn:hover{background:#f0f0ed;border-color:#bbb}.btn:focus-visible,.slot:focus-visible,.icon-btn:focus-visible{outline:3px solid #b8d9fa;outline-offset:2px}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.primary:hover{background:#2d6fb5}.btn.small{padding:5px 9px;min-height:28px;font-size:11px}
+.template-bar{display:flex;align-items:center;gap:8px;background:#edf6ff;border:1px solid #cfe4f8;border-radius:10px;padding:.65rem .75rem;margin-bottom:.75rem;flex-wrap:wrap}.template-bar label{font-size:12px;font-weight:700;color:#285f91}.template-bar .select{flex:1;min-width:190px}
+.payroll{background:#fff8eb;border:1px solid #f0d8aa;border-radius:10px;padding:.8rem;margin-bottom:.75rem}.payroll-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:.65rem}.payroll-title{font-size:13px;font-weight:750}.payroll-note{font-size:10px;color:#8c714b;margin-top:2px;line-height:1.4}.payroll-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:8px 12px;align-items:end}.field label{display:block;font-size:11px;color:#806b4c;margin-bottom:4px}.field input{width:100%;border:1px solid #dfc99f;border-radius:7px;padding:6px 8px;background:#fff;min-width:0}.pension-control{display:grid;grid-template-columns:1fr 48px;gap:8px;align-items:center}.pension-control input[type=range]{width:100%;accent-color:#a86d16}.pension-control input[type=number]{text-align:right}.deduction-pills{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:2px}.pill{background:#fff;border:1px solid #ead7b4;border-radius:7px;padding:6px;min-width:0}.pill span{display:block;font-size:9px;color:#947c59;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pill strong{display:block;font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slots-wrap{margin-bottom:1rem}.slots-label{font-size:11px;color:#888;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px}.slot-nav{display:flex;align-items:center;gap:5px}.page-label{min-width:38px;text-align:center;color:#777}.save-indicator{font-size:11px;color:#3b6d11;opacity:0;transition:opacity .25s}.save-indicator.show{opacity:1}.icon-btn{width:27px;height:27px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;color:#555}.icon-btn:disabled{opacity:.35;cursor:default}.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.slot{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.65rem .7rem;cursor:pointer;transition:border-color .2s,background .2s;position:relative;min-width:0}.slot:hover{border-color:#aaa}.slot.active{border:2px solid var(--blue);background:#f0f7ff;padding:calc(.65rem - 1px) calc(.7rem - 1px)}.slot-name-input{width:100%;border:none;font-size:13px;font-weight:700;color:#111;background:transparent;outline:none;cursor:pointer;padding:0;margin-bottom:3px;min-width:0;text-overflow:ellipsis}.slot.active .slot-name-input{cursor:text}.slot-meta{font-size:10px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.slot-actions{display:flex;gap:4px;margin-top:6px;min-width:0}.slot-btn{border:1px solid #e8e8e5;background:none;border-radius:6px;padding:3px 7px;font-size:10px;color:#777;cursor:pointer;min-width:0}.slot-btn:hover{background:#f5f5f3;color:#333}.slot-btn.danger:hover{background:#fef0f0;color:#e24b4a;border-color:#f5c4c4}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:.75rem}.sum-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.65rem .9rem;min-width:0}.sum-card .lbl{font-size:10px;color:#888;margin-bottom:2px}.sum-card .val{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sum-card .sub{font-size:10px;color:#999;margin-top:1px}
+.allocation-sticky{position:sticky;top:0;z-index:20;background:rgba(245,245,243,.95);backdrop-filter:blur(10px);padding:.45rem 0 .55rem;margin-bottom:.55rem}.allocation-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.55rem .7rem;box-shadow:0 3px 12px rgba(0,0,0,.04)}.allocation-line{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:#666}.allocation-line strong{font-size:13px;color:#222}.allocation-status{margin-left:auto;font-weight:700}.allocation-status.ok{color:#277858}.allocation-status.bad{color:#c3483f}.stacked-bar{display:flex;height:12px;border-radius:7px;overflow:hidden;border:1px solid var(--line);background:#eee}.seg{transition:width .25s}.warn{font-size:11px;color:#b33f37;margin-top:6px;display:none;align-items:center;gap:8px;line-height:1.35}.warn .btn{margin-left:auto}.legend{display:flex;gap:14px;margin-bottom:.75rem;font-size:11px;color:#666;flex-wrap:wrap}.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+.cat-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;margin-bottom:.75rem;min-width:0;scroll-margin-top:72px}.cat-head{display:flex;align-items:center;gap:8px;margin-bottom:.35rem;min-width:0}.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}.cat-name{font-size:14px;font-weight:700;flex:1;min-width:0}.pct-badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff}.lock-btn{border:1px solid #e2e2df;background:#fff;border-radius:7px;height:25px;padding:0 7px;font-size:11px;color:#888;cursor:pointer}.lock-btn.locked{background:#fff7e8;border-color:#ebcf95;color:#8b611c}.cat-sub{font-size:11px;color:#999;margin-bottom:.6rem}.slider-wrap{display:flex;align-items:center;gap:10px;margin-bottom:.65rem}.slider-wrap input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer}.slider-wrap input[type=range]:disabled{opacity:.45;cursor:not-allowed}.slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--ac)}.slider-wrap input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--ac);cursor:pointer;box-shadow:0 0 0 1px var(--ac);border:none}.pct-num{width:44px;text-align:right;font-size:13px;font-weight:600;color:#555}.budget-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#777;margin-bottom:.5rem;flex-wrap:wrap}.progress-bg{height:5px;background:#f0efed;border-radius:3px;margin-bottom:.75rem;overflow:hidden}.progress-fill{height:100%;border-radius:3px;transition:width .25s}
+.items{display:flex;flex-direction:column;gap:6px;margin-bottom:.55rem;min-width:0}.item-row{display:grid;grid-template-columns:24px minmax(0,1fr) 104px 30px;gap:6px;align-items:center;min-width:0}.drag-handle{cursor:grab;color:#c5c5c0;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;height:28px;user-select:none;touch-action:none}.drag-handle:hover{color:#777}.drag-handle:active{cursor:grabbing}.item-row input{border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:12px;outline:none;background:#fafafa;color:#111;min-width:0;width:100%}.item-row input:focus{border-color:#999;background:#fff}.item-row input[type=number]{text-align:right}.del-btn{width:30px;height:30px;border:none;background:none;cursor:pointer;color:#aaa;font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0}.del-btn:hover{color:#e24b4a;background:#fef0f0}.sortable-ghost{opacity:.3}.sortable-chosen{background:#eef6ff;border-radius:7px}.sortable-drag{opacity:.9}.add-btn{border:1px dashed #d7d7d2;background:none;border-radius:7px;padding:6px 10px;font-size:12px;color:#888;cursor:pointer;width:100%;text-align:left}.add-btn:hover{background:#fafafa;color:#444;border-color:#999}.over-tag,.ok-tag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px}.over-tag{background:#fef0f0;color:#d04543}.ok-tag{background:#eaf3de;color:#3b6d11}.toast{position:fixed;bottom:calc(1.2rem + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#222;color:#fff;font-size:12px;padding:9px 15px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:99;max-width:calc(100vw - 2rem);text-align:center}.toast.show{opacity:1}input[type=file]{display:none}
+@media(max-width:560px){.container{padding-top:.8rem}.app-head{align-items:flex-start}.settings{flex-direction:column}.select{padding-top:7px;padding-bottom:7px}.top-bar{display:block}.income-bar{width:100%;margin-bottom:8px}.io-btns{display:grid;grid-template-columns:repeat(3,1fr)}.io-btns .btn{padding-inline:6px}.payroll-grid{grid-template-columns:1fr}.deduction-pills{grid-column:1;grid-template-columns:repeat(2,minmax(0,1fr))}.slots{gap:6px}.slot{padding:.55rem}.slot.active{padding:calc(.55rem - 1px)}.slot-actions{justify-content:space-between}.slot-btn{padding:4px 6px}.sum-card{padding:.55rem .6rem}.sum-card .val{font-size:13px}.allocation-sticky{margin-left:-.25rem;margin-right:-.25rem}.cat-card{padding:.8rem}.budget-row{font-size:10px}.item-row{grid-template-columns:22px minmax(0,1fr) 86px 30px;gap:5px}.item-row input{padding:7px 6px}.del-btn{color:#8e8e89;background:#f4f4f1}}
+@media(max-width:370px){.item-row{grid-template-columns:20px minmax(0,1fr) 72px 30px}.cat-head{gap:5px}.lock-btn{padding:0 5px}.pct-badge{padding-inline:6px}.legend{gap:8px}.btn{font-size:11px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>💰 BudgetSplit</h1>
-
-  <div class="top-bar">
-    <div class="income-bar">
-      <label>月收入</label>
-      <span class="currency">NT$</span>
-      <input type="number" id="income" value="50000" step="1000" min="0" placeholder="0">
-    </div>
-    <div class="io-btns">
-      <button class="btn primary" id="exportBtn">⬇ 匯出 CSV</button>
-      <button class="btn" id="importBtn">⬆ 匯入 CSV</button>
-      <button class="btn" id="snapshotBtn">📸 快照</button>
-      <input type="file" id="fileInput" accept=".csv">
-    </div>
-  </div>
-
-  <div class="slots-label">
-    <span>存檔欄位</span>
-    <span class="save-indicator" id="saveIndicator">✓ 資料已保存至本地</span>
-  </div>
-  <div class="slots" id="slots"></div>
-
-  <div id="warn" class="warn" style="display:none">⚠️ 比例總和目前為 <span id="warn-val"></span>%，請調整至 100% <button class="warn-fix" id="normalizeBtn">一鍵歸位</button></div>
-
-  <div class="summary">
-    <div class="sum-card"><div class="lbl">月收入</div><div class="val" id="s-inc">NT$50,000</div></div>
-    <div class="sum-card"><div class="lbl">總支出</div><div class="val" id="s-spend">NT$0</div></div>
-    <div class="sum-card"><div class="lbl">結餘</div><div class="val" id="s-left">NT$50,000</div><div class="sub" id="s-left-sub">100%</div></div>
-  </div>
-
-  <div class="stacked-bar">
-    <div class="seg" id="bar-n" style="width:50%;background:#378ADD"></div>
-    <div class="seg" id="bar-w" style="width:30%;background:#1D9E75"></div>
-    <div class="seg" id="bar-s" style="width:20%;background:#D85A30"></div>
-  </div>
-  <div class="legend">
-    <span><span class="legend-dot" style="background:#378ADD"></span>必要支出 Needs</span>
-    <span><span class="legend-dot" style="background:#1D9E75"></span>想要支出 Wants</span>
-    <span><span class="legend-dot" style="background:#D85A30"></span>儲蓄/投資 Savings</span>
-  </div>
-
-  <div id="cats"></div>
-</div>
-<div class="toast" id="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<main class="container">
+  <header class="app-head"><h1>◔ BudgetSplit</h1><div class="settings"><select class="select" id="language" aria-label="Language"><option value="zh-TW">繁體中文</option><option value="en">English</option></select><select class="select" id="currency" aria-label="Currency"><option value="TWD">TWD · NT$</option><option value="USD">USD · $</option><option value="JPY">JPY · ¥</option><option value="EUR">EUR · €</option><option value="GBP">GBP · £</option><option value="CAD">CAD · C$</option><option value="AUD">AUD · A$</option><option value="KRW">KRW · ₩</option><option value="SGD">SGD · S$</option></select></div></header>
+  <section class="top-bar"><div class="income-bar"><label id="incomeLabel" for="income"></label><span class="currency-symbol" id="currencySymbol">NT$</span><input type="number" id="income" value="50000" step="1000" min="0" inputmode="decimal" placeholder="0"></div><div class="io-btns"><button class="btn primary" id="exportBtn" data-i18n="exportCsv"></button><button class="btn" id="importBtn" data-i18n="importCsv"></button><button class="btn" id="snapshotBtn" data-i18n="snapshot"></button><input type="file" id="fileInput" accept=".csv,text/csv"></div></section>
+  <section class="template-bar"><label for="templateSelect" data-i18n="starterTemplate"></label><select class="select" id="templateSelect"></select><button class="btn primary" id="applyTemplateBtn" data-i18n="apply"></button></section>
+  <section class="payroll" id="payrollPanel" hidden><div class="payroll-head"><div><div class="payroll-title" data-i18n="payrollTitle"></div><div class="payroll-note" data-i18n="payrollNote"></div></div><button class="btn small" id="closePayrollBtn" data-i18n="disable"></button></div><div class="payroll-grid"><div class="field"><label for="grossIncome" data-i18n="grossSalary"></label><input id="grossIncome" type="number" min="0" step="1000" inputmode="decimal"></div><div class="field"><label for="pensionRate" data-i18n="pensionRate"></label><div class="pension-control"><input id="pensionSlider" type="range" min="0" max="6" step="1"><input id="pensionRate" type="number" min="0" max="6" step="1" inputmode="numeric"></div></div><div class="deduction-pills"><div class="pill"><span data-i18n="laborInsurance"></span><strong id="laborValue"></strong></div><div class="pill"><span data-i18n="healthInsurance"></span><strong id="healthValue"></strong></div><div class="pill"><span data-i18n="monthlyTax"></span><strong id="taxValue"></strong></div><div class="pill"><span data-i18n="pensionSelf"></span><strong id="pensionValue"></strong></div></div></div></section>
+  <section class="slots-wrap"><div class="slots-label"><span><span data-i18n="budgetSlots"></span> · <span class="save-indicator" id="saveIndicator" data-i18n="saved"></span></span><span class="slot-nav"><button class="icon-btn" id="prevSlots" aria-label="Previous">‹</button><span class="page-label" id="slotPageLabel"></span><button class="icon-btn" id="nextSlots" aria-label="Next">›</button></span></div><div class="slots" id="slots"></div></section>
+  <section class="summary"><div class="sum-card"><div class="lbl" data-i18n="monthlyIncome"></div><div class="val" id="s-inc"></div></div><div class="sum-card"><div class="lbl" data-i18n="totalExpenses"></div><div class="val" id="s-spend"></div></div><div class="sum-card"><div class="lbl" data-i18n="remaining"></div><div class="val" id="s-left"></div><div class="sub" id="s-left-sub"></div></div></section>
+  <section class="allocation-sticky" aria-live="polite"><div class="allocation-panel"><div class="allocation-line"><span data-i18n="allocationTotal"></span><strong id="allocationTotal">100%</strong><span class="allocation-status ok" id="allocationStatus"></span></div><div class="stacked-bar"><div class="seg" id="bar-n" style="width:50%;background:#378ADD"></div><div class="seg" id="bar-w" style="width:30%;background:#1D9E75"></div><div class="seg" id="bar-s" style="width:20%;background:#D85A30"></div></div><div class="warn" id="warn"><span id="warnText"></span><button class="btn small" id="normalizeBtn" data-i18n="safeBalance"></button></div></div></section>
+  <div class="legend" id="legend"></div><section id="cats"></section>
+</main><div class="toast" id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script>
-const CAT_DEFS=[
-  {id:'n',label:'必要支出',sub:'Needs — 房租・伙食・水電・交通・保險',color:'#378ADD'},
-  {id:'w',label:'想要支出',sub:'Wants — 聚餐・娛樂・購物・旅遊',color:'#1D9E75'},
-  {id:'s',label:'儲蓄與投資',sub:'Savings — 緊急預備金・股票・退休金',color:'#D85A30'}
-];
-const SLOT_COUNT=3;
-const LS_KEY='budgetsplit_slots';
-const LS_ACTIVE='budgetsplit_active';
-
-let CATS=makeCats();
-let activeSlot=0;
-let slots=loadSlots();
-let saveTimer=null;
-let lastAdjustedCI=null;
-let sortables=[];
-
-function makeCats(){
-  return CAT_DEFS.map(d=>({...d,pct:d.id==='n'?50:d.id==='w'?30:20,items:[]}));
-}
-function defaultSlot(i){
-  return {name:`存檔 ${i+1}`,savedAt:null,income:50000,cats:makeCats()};
-}
-function loadSlots(){
-  try{
-    const raw=localStorage.getItem(LS_KEY);
-    if(raw){
-      const arr=JSON.parse(raw);
-      while(arr.length<SLOT_COUNT) arr.push(defaultSlot(arr.length));
-      return arr.slice(0,SLOT_COUNT);
-    }
-  }catch(e){}
-  return Array.from({length:SLOT_COUNT},(_,i)=>defaultSlot(i));
-}
-function saveSlots(){
-  slots[activeSlot].income=income();
-  slots[activeSlot].cats=JSON.parse(JSON.stringify(CATS));
-  slots[activeSlot].savedAt=new Date().toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
-  localStorage.setItem(LS_ACTIVE,activeSlot);
-  showSaveIndicator();
-  renderSlots();
-}
-function scheduleSave(){
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(saveSlots,800);
-}
-function showSaveIndicator(){
-  const el=document.getElementById('saveIndicator');
-  el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'),2000);
-}
-function loadSlot(i){
-  // 切換前先把當前存檔待儲存的資料寫入，避免 debounce 未觸發造成遺失
-  if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveSlots(); }
-  activeSlot=i;
-  const s=slots[i];
-  document.getElementById('income').value=s.income||50000;
-  CATS=JSON.parse(JSON.stringify(s.cats||makeCats()));
-  lastAdjustedCI=null;
-  localStorage.setItem(LS_ACTIVE,i);
-  renderSlots();
-  render();
-}
-
-/* ── SLOTS UI ── */
-function renderSlots(){
-  const el=document.getElementById('slots');
-  el.innerHTML='';
-  slots.forEach((s,i)=>{
-    const div=document.createElement('div');
-    div.className='slot'+(i===activeSlot?' active':'');
-    div.innerHTML=`
-      <input class="slot-name-input" type="text" value="${esc(s.name)}" placeholder="存檔名稱" data-slot="${i}" ${i!==activeSlot?'readonly':''}/>
-      <div class="slot-meta">${s.savedAt?'上次儲存 '+s.savedAt:'尚未儲存'}</div>
-      <div class="slot-actions">
-        ${i!==activeSlot?`<button class="slot-btn" data-load="${i}">載入</button>`:'<span style="font-size:10px;color:#378ADD;font-weight:500">使用中</span>'}
-        <button class="slot-btn danger" data-clear="${i}">清除</button>
-      </div>`;
-    el.appendChild(div);
-  });
-  el.querySelectorAll('.slot-name-input').forEach(inp=>{
-    inp.addEventListener('input',e=>{
-      slots[+e.target.dataset.slot].name=e.target.value;
-      try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
-    });
-    inp.addEventListener('click',e=>{
-      const i=+e.target.dataset.slot;
-      if(i!==activeSlot) loadSlot(i);
-    });
-  });
-  el.querySelectorAll('button[data-load]').forEach(btn=>{
-    btn.addEventListener('click',()=>loadSlot(+btn.dataset.load));
-  });
-  el.querySelectorAll('button[data-clear]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const i=+btn.dataset.clear;
-      if(!confirm(`確定要清除「${slots[i].name}」嗎？此存檔的所有資料將被清空，無法復原。`)) return;
-      slots[i]={...defaultSlot(i),name:slots[i].name,savedAt:null};
-      try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
-      if(i===activeSlot) loadSlot(i);
-      else renderSlots();
-      showToast('🗑 已清除存檔');
-    });
-  });
-}
-
-/* ── HELPERS ── */
-const fmt=n=>'NT$'+Math.round(n).toLocaleString();
-const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const income=()=>parseFloat(document.getElementById('income').value)||0;
-const catBudget=c=>income()*c.pct/100;
-const catSpent=c=>c.items.reduce((a,i)=>a+(parseFloat(i.amount)||0),0);
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-function setSliderFill(slider,color){
-  const pct=parseInt(slider.value);
-  slider.style.background=`linear-gradient(to right,${color} 0%,${color} ${pct}%,#e8e8e5 ${pct}%,#e8e8e5 100%)`;
-}
-
-/* 一鍵歸位：固定最後調整過的 bar，剩餘平均分配給另外兩個 */
-function normalizePcts(){
-  const total=CATS.reduce((a,c)=>a+c.pct,0);
-  if(total===100) return;
-  let lockIdx=(lastAdjustedCI===null||lastAdjustedCI===undefined)?0:lastAdjustedCI;
-  let locked=Math.min(100,Math.max(0,CATS[lockIdx].pct));
-  CATS[lockIdx].pct=locked;
-  const remaining=100-locked;
-  const others=[0,1,2].filter(i=>i!==lockIdx);
-  const half=Math.floor(remaining/2);
-  CATS[others[0]].pct=half;
-  CATS[others[1]].pct=remaining-half;
-  render();
-}
-
-/* ── SUMMARY UPDATE (no DOM rebuild) ── */
-function updateSummary(){
-  const inc=income();
-  let total=0; CATS.forEach(c=>total+=catSpent(c));
-  const left=inc-total;
-  const totalPct=CATS.reduce((a,c)=>a+c.pct,0);
-
-  document.getElementById('s-inc').textContent=fmt(inc);
-  document.getElementById('s-spend').textContent=fmt(total);
-  const lEl=document.getElementById('s-left');
-  lEl.textContent=fmt(left);
-  lEl.style.color=left<0?'#e24b4a':'#1a1a1a';
-  document.getElementById('s-left-sub').textContent=inc?Math.round(left/inc*100)+'%':'—';
-  ['n','w','s'].forEach((id,i)=>{document.getElementById('bar-'+id).style.width=CATS[i].pct+'%';});
-
-  const wEl=document.getElementById('warn');
-  if(totalPct!==100){wEl.style.display='flex';document.getElementById('warn-val').textContent=totalPct;}
-  else wEl.style.display='none';
-
-  CATS.forEach((cat,ci)=>{
-    const card=document.getElementById('cat-card-'+ci);
-    if(!card) return;
-    const budget=catBudget(cat),spent=catSpent(cat),over=spent>budget;
-    const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
-    const tag=card.querySelector('.status-tag');
-    tag.className='status-tag '+(over?'over-tag':'ok-tag');
-    tag.textContent=over?'超支':'尚可';
-    card.querySelector('.pct-badge').textContent=cat.pct+'%';
-    const sl=card.querySelector('input[type=range]');
-    if(sl){sl.value=cat.pct;setSliderFill(sl,cat.color);}
-    card.querySelector('.pct-num').textContent=cat.pct+'%';
-    const bB=card.querySelector('.b-budget'),bS=card.querySelector('.b-spent'),bL=card.querySelector('.b-left');
-    if(bB) bB.textContent=fmt(budget);
-    if(bS){bS.textContent=fmt(spent);bS.style.color=over?'#e24b4a':cat.color;}
-    if(bL) bL.textContent='剩餘 '+fmt(budget-spent);
-    const pf=card.querySelector('.progress-fill');
-    if(pf){pf.style.width=pctUsed+'%';pf.style.background=over?'#e24b4a':cat.color;}
-  });
-
-  scheduleSave();
-}
-
-function render(){updateSummary();renderCats();}
-
-function renderCats(){
-  // 重建前先銷毀舊的 Sortable 實例，避免記憶體洩漏與重複綁定
-  sortables.forEach(s=>{try{s.destroy();}catch(e){}});
-  sortables=[];
-
-  const el=document.getElementById('cats');
-  el.innerHTML='';
-  CATS.forEach((cat,ci)=>{
-    const budget=catBudget(cat),spent=catSpent(cat),over=spent>budget;
-    const pctUsed=budget>0?Math.min(spent/budget*100,100):0;
-    const card=document.createElement('div');
-    card.className='cat-card'; card.id='cat-card-'+ci;
-    card.innerHTML=`
-      <div class="cat-head">
-        <span class="dot" style="background:${cat.color}"></span>
-        <span class="cat-name">${cat.label}</span>
-        <span class="pct-badge" style="background:${cat.color}">${cat.pct}%</span>
-        <span class="status-tag ${over?'over-tag':'ok-tag'}">${over?'超支':'尚可'}</span>
-      </div>
-      <div class="cat-sub">${cat.sub}</div>
-      <div class="slider-wrap" style="--ac:${cat.color}">
-        <input type="range" min="0" max="100" step="1" value="${cat.pct}" data-ci="${ci}">
-        <span class="pct-num">${cat.pct}%</span>
-      </div>
-      <div class="budget-row">
-        <span>預算 <strong class="b-budget">${fmt(budget)}</strong></span>
-        <span>支出 <strong class="b-spent" style="color:${over?'#e24b4a':cat.color}">${fmt(spent)}</strong></span>
-        <span class="b-left">剩餘 ${fmt(budget-spent)}</span>
-      </div>
-      <div class="progress-bg"><div class="progress-fill" style="width:${pctUsed}%;background:${over?'#e24b4a':cat.color}"></div></div>
-      <div class="items" data-ci="${ci}">
-        ${cat.items.map((item,ii)=>`
-          <div class="item-row">
-            <span class="drag-handle" title="拖曳排序">≡</span>
-            <input type="text" value="${esc(item.title||'')}" placeholder="說明／標題" data-ci="${ci}" data-ii="${ii}" data-f="title">
-            <input type="number" value="${item.amount||''}" placeholder="金額" min="0" step="100" data-ci="${ci}" data-ii="${ii}" data-f="amount">
-            <button class="del-btn" data-del="${ci}-${ii}" title="刪除">✕</button>
-          </div>`).join('')}
-      </div>
-      <button class="add-btn" data-add="${ci}">＋ 新增項目</button>`;
-    el.appendChild(card);
-    setSliderFill(card.querySelector('input[type=range]'),cat.color);
-
-    // 初始化此分類的拖曳排序（不設 group → 鎖死在分類內，無法跨類）
-    const itemsEl=card.querySelector('.items');
-    if(typeof Sortable!=='undefined'){
-      sortables.push(Sortable.create(itemsEl,{
-        handle:'.drag-handle',
-        animation:150,
-        ghostClass:'sortable-ghost',
-        chosenClass:'sortable-chosen',
-        dragClass:'sortable-drag',
-        onEnd:function(evt){
-          if(evt.oldIndex===evt.newIndex) return;
-          const arr=CATS[ci].items;
-          const [moved]=arr.splice(evt.oldIndex,1);
-          arr.splice(evt.newIndex,0,moved);
-          render();
-          scheduleSave();
-        }
-      }));
-    }
-  });
-  attachEvents();
-}
-
-function attachEvents(){
-  const el=document.getElementById('cats');
-  el.querySelectorAll('input[type=range]').forEach(r=>{
-    r.addEventListener('input',e=>{
-      lastAdjustedCI=+e.target.dataset.ci;
-      CATS[+e.target.dataset.ci].pct=parseInt(e.target.value);
-      setSliderFill(e.target,CATS[+e.target.dataset.ci].color);
-      updateSummary();
-    });
-  });
-  el.querySelectorAll('input[data-f]').forEach(inp=>{
-    inp.addEventListener('input',e=>{
-      CATS[+e.target.dataset.ci].items[+e.target.dataset.ii][e.target.dataset.f]=e.target.value;
-      updateSummary();
-    });
-  });
-  el.querySelectorAll('button[data-del]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const[ci,ii]=btn.dataset.del.split('-').map(Number);
-      CATS[ci].items.splice(ii,1); render();
-    });
-  });
-  el.querySelectorAll('button[data-add]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      CATS[+btn.dataset.add].items.push({title:'',amount:''}); render();
-    });
-  });
-}
-
-/* ── EXPORT CSV ── */
-document.getElementById('exportBtn').addEventListener('click',()=>{
-  const inc=income();
-  const rows=[['50/30/20 收支分析表'],['月收入',inc],[],['類別','比例(%)','預算(NT$)','說明','金額(NT$)']];
-  CATS.forEach(cat=>{
-    const budget=catBudget(cat);
-    if(!cat.items.length){rows.push([cat.label,cat.pct,Math.round(budget),'','']);}
-    else cat.items.forEach((item,i)=>rows.push([i===0?cat.label:'',i===0?cat.pct:'',i===0?Math.round(budget):'',item.title||'',parseFloat(item.amount)||0]));
-  });
-  rows.push([],['[摘要]','','','總支出',Math.round(CATS.reduce((a,c)=>a+catSpent(c),0))]);
-  rows.push(['[摘要]','','','結餘',Math.round(inc-CATS.reduce((a,c)=>a+catSpent(c),0))]);
-  const csv=rows.map(r=>r.map(v=>{const s=String(v);return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  const now=new Date(),ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  let slotName=(slots[activeSlot].name||'').trim().replace(/[\/\\:*?"<>|]/g,'_');
-  if(!slotName) slotName='BudgetSplit';
-  a.download=`${slotName}_${ds}.csv`;a.click();URL.revokeObjectURL(url);
-  showToast('✅ 已匯出 CSV');
-});
-
-/* ── IMPORT CSV ── */
-document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change',e=>{
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=evt=>{
-    try{
-      let text=evt.target.result;
-      if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
-      const lines=text.split(/\r?\n/).map(parseCSVLine);
-      const catMap={'必要支出':0,'想要支出':1,'儲蓄與投資':2};
-      const SKIP=['總支出','結餘','說明'];
-      let inc=0,lastCI=undefined;
-      const newPcts=[50,30,20],newItems=[[],[],[]];
-      lines.forEach(cols=>{
-        if(!cols||cols.length<2)return;
-        if(cols[0]==='月收入'){inc=parseFloat(cols[1])||0;return;}
-        if(catMap[cols[0]]!==undefined){lastCI=catMap[cols[0]];if(cols[1]!=='')newPcts[lastCI]=parseFloat(cols[1])||newPcts[lastCI];}
-        if(cols[0]==='[摘要]'||SKIP.includes(cols[3]))return;
-        if(lastCI!==undefined&&cols.length>=5&&(cols[3]!==''||cols[4]!==''))newItems[lastCI].push({title:cols[3],amount:cols[4]||''});
-      });
-      if(inc)document.getElementById('income').value=inc;
-      CATS.forEach((cat,ci)=>{cat.pct=newPcts[ci];cat.items=newItems[ci];});
-      let baseName=file.name.replace(/\.csv$/i,'').replace(/_\d{8}$/,'').trim();
-      if(baseName){
-        slots[activeSlot].name=baseName;
-        try{localStorage.setItem(LS_KEY,JSON.stringify(slots));}catch(e){}
-      }
-      lastAdjustedCI=null;
-      render();
-      renderSlots();
-      showToast('✅ 匯入成功');
-    }catch(err){showToast('❌ 匯入失敗，請確認 CSV 格式');}
-    e.target.value='';
-  };
-  reader.readAsText(file,'UTF-8');
-});
-
-function parseCSVLine(line){
-  const res=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-    else if(c===','&&!inQ){res.push(cur.trim());cur='';}
-    else cur+=c;
-  }
-  res.push(cur.trim());return res;
-}
-
-/* ── SNAPSHOT (Canvas 自繪 PNG，非截圖現有 UI) ── */
-function exportSnapshot(){
-  const inc=income();
-  const slotName=(slots[activeSlot].name||'BudgetSplit').trim();
-  const dateStr=new Date().toLocaleDateString('zh-TW');
-  const scale=2, W=600, padX=36;
-
-  const measureCtx=document.createElement('canvas').getContext('2d');
-  const H=paint(measureCtx,false,0);
-
-  const canvas=document.createElement('canvas');
-  canvas.width=W*scale; canvas.height=Math.round(H*scale);
-  const ctx=canvas.getContext('2d');
-  ctx.scale(scale,scale);
-  paint(ctx,true,H);
-
-  canvas.toBlob(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url;
-    const now=new Date(), ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-    let clean=slotName.replace(/[\/\\:*?"<>|]/g,'_')||'BudgetSplit';
-    a.download=`${clean}_快照_${ds}.png`;
-    a.click(); URL.revokeObjectURL(url);
-    showToast('📸 已輸出快照');
-  },'image/png');
-
-  function paint(ctx,draw,Htotal){
-    ctx.textBaseline='middle';
-    if(draw){ ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,Htotal); }
-    const fit=(text,maxW)=>{
-      if(ctx.measureText(text).width<=maxW) return text;
-      let t=text;
-      while(t.length>1 && ctx.measureText(t+'…').width>maxW) t=t.slice(0,-1);
-      return t+'…';
-    };
-    let y=48;
-
-    // 標題 + 日期
-    ctx.textAlign='left';
-    ctx.font='700 24px system-ui,-apple-system,sans-serif';
-    if(draw){ ctx.fillStyle='#111'; ctx.fillText(fit(slotName,W-padX*2-170),padX,y); }
-    ctx.textAlign='right';
-    ctx.font='400 13px system-ui,sans-serif';
-    if(draw){ ctx.fillStyle='#aaa'; ctx.fillText('BudgetSplit · '+dateStr,W-padX,y); }
-    y+=30;
-
-    ctx.textAlign='left';
-    ctx.font='400 13px system-ui,sans-serif';
-    if(draw){ ctx.fillStyle='#888'; ctx.fillText('50 / 30 / 20 資產配置快照',padX,y); }
-    y+=26;
-
-    if(draw){ ctx.strokeStyle='#eeeeec'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
-    y+=28;
-
-    // 月收入
-    ctx.textAlign='left';
-    ctx.font='400 14px system-ui,sans-serif';
-    if(draw){ ctx.fillStyle='#666'; ctx.fillText('月收入',padX,y); }
-    ctx.textAlign='right';
-    ctx.font='700 18px system-ui,sans-serif';
-    if(draw){ ctx.fillStyle='#111'; ctx.fillText(fmt(inc),W-padX,y); }
-    y+=30;
-
-    // 堆疊 bar
-    const barW=W-padX*2, barH=16, barTop=y;
-    if(draw){
-      ctx.save();
-      ctx.beginPath();
-      if(ctx.roundRect) ctx.roundRect(padX,barTop,barW,barH,8); else ctx.rect(padX,barTop,barW,barH);
-      ctx.clip();
-      ctx.fillStyle='#eeeeec'; ctx.fillRect(padX,barTop,barW,barH);
-      let sx=padX;
-      CATS.forEach(c=>{
-        const w=barW*(Math.max(0,c.pct)/100);
-        ctx.fillStyle=c.color; ctx.fillRect(sx,barTop,w,barH); sx+=w;
-      });
-      ctx.restore();
-    }
-    y+=barH+30;
-
-    // 各分類
-    CATS.forEach(c=>{
-      const budget=inc*c.pct/100, spent=catSpent(c), over=spent>budget;
-      if(draw){
-        ctx.fillStyle=c.color;
-        ctx.beginPath(); ctx.arc(padX+5,y,5,0,Math.PI*2); ctx.fill();
-        ctx.textAlign='left';
-        ctx.font='600 15px system-ui,sans-serif'; ctx.fillStyle='#111';
-        ctx.fillText(c.label,padX+18,y);
-        const nameW=ctx.measureText(c.label).width;
-        ctx.font='600 13px system-ui,sans-serif'; ctx.fillStyle=c.color;
-        ctx.fillText('  '+c.pct+'%',padX+18+nameW,y);
-        ctx.textAlign='right';
-        ctx.font='400 12px system-ui,sans-serif';
-        ctx.fillStyle=over?'#e24b4a':'#777';
-        ctx.fillText('預算 '+fmt(budget)+' · 支出 '+fmt(spent),W-padX,y);
-      }
-      y+=30;
-      if(c.items.length===0){
-        if(draw){ ctx.textAlign='left'; ctx.font='400 13px system-ui,sans-serif'; ctx.fillStyle='#bbb'; ctx.fillText('（尚無項目）',padX+18,y); }
-        y+=28;
-      } else {
-        c.items.forEach(it=>{
-          if(draw){
-            ctx.textAlign='left'; ctx.font='400 13px system-ui,sans-serif'; ctx.fillStyle='#444';
-            ctx.fillText(fit(it.title||'（未命名）',barW-150),padX+18,y);
-            ctx.textAlign='right'; ctx.font='500 13px system-ui,sans-serif'; ctx.fillStyle='#222';
-            ctx.fillText(fmt(parseFloat(it.amount)||0),W-padX,y);
-          }
-          y+=28;
-        });
-      }
-      y+=8;
-      if(draw){ ctx.strokeStyle='#f2f1ef'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padX,y); ctx.lineTo(W-padX,y); ctx.stroke(); }
-      y+=12;
-    });
-
-    // footer 總計
-    y+=6;
-    const totalSpent=CATS.reduce((a,c)=>a+catSpent(c),0), balance=inc-totalSpent;
-    if(draw){
-      ctx.textAlign='left'; ctx.font='600 14px system-ui,sans-serif'; ctx.fillStyle='#555'; ctx.fillText('總支出',padX,y);
-      ctx.textAlign='right'; ctx.font='700 16px system-ui,sans-serif'; ctx.fillStyle='#111'; ctx.fillText(fmt(totalSpent),W-padX,y);
-    }
-    y+=30;
-    if(draw){
-      ctx.textAlign='left'; ctx.font='600 14px system-ui,sans-serif'; ctx.fillStyle='#555'; ctx.fillText('結餘',padX,y);
-      ctx.textAlign='right'; ctx.font='700 18px system-ui,sans-serif'; ctx.fillStyle=balance<0?'#e24b4a':'#1D9E75'; ctx.fillText(fmt(balance),W-padX,y);
-    }
-    y+=28;
-
-    return y+24;
-  }
-}
-document.getElementById('snapshotBtn').addEventListener('click',exportSnapshot);
-
-document.getElementById('income').addEventListener('input',updateSummary);
-document.getElementById('normalizeBtn').addEventListener('click',normalizePcts);
-
-/* ── INIT ── */
-try{activeSlot=parseInt(localStorage.getItem(LS_ACTIVE))||0;}catch(e){activeSlot=0;}
-renderSlots();
-loadSlot(activeSlot);
+'use strict';
+const I18N={
+'zh-TW':{exportCsv:'匯出 CSV',importCsv:'匯入 CSV',snapshot:'下載快照',monthlyIncome:'月收入',grossMonthlyIncome:'月收入（稅前）',totalExpenses:'已規劃支出',remaining:'尚未分配',starterTemplate:'快速開始',apply:'套用模板',payrollTitle:'台灣薪資與每月預扣試算',payrollNote:'依 2026 單身受僱者規則概算；投保級距、扶養與其他扣除額會影響實際金額，請以官方資料為準。項目金額仍可手動修改。',disable:'關閉試算',grossSalary:'每月稅前薪資',pensionRate:'勞退自提（0–6%）',laborInsurance:'勞保＋就保',healthInsurance:'健保自付',monthlyTax:'所得稅／月',pensionSelf:'勞退自提',budgetSlots:'預算版本',saved:'已儲存',allocationTotal:'比例合計',balanced:'剛好 100%',needsBalance:'還差 {delta}%',overBalance:'超出 {delta}%',safeBalance:'安全補到 100%',needs:'必要支出',wants:'想要支出',savings:'儲蓄／投資',needsSub:'Needs · 住居、保險、飲食與交通',wantsSub:'Wants · 娛樂、購物與彈性花費',savingsSub:'Savings · 緊急預備、投資與目標',budget:'預算',spent:'已列',left:'可用',over:'超出',ok:'範圍內',lock:'鎖定',unlock:'解鎖',lockTitle:'鎖定後，安全平衡不會修改這一類',itemPlaceholder:'支出項目',amountPlaceholder:'金額',delete:'刪除',drag:'拖曳排序',addItem:'＋ 新增項目',emptySlot:'尚未儲存',active:'使用中',load:'載入',clear:'清除',page:'{page} / {pages}',defaultSlot:'預算 {n}',confirmClear:'確定清除「{name}」？此操作無法復原。',cleared:'已清除預算',currencyNoConvert:'已切換顯示幣別；現有數字不會自動換匯。',confirmTemplate:'套用模板會取代目前版本的收入、比例和項目。要繼續嗎？',templateApplied:'模板已套用，可從上方調整薪資與扣款。',cannotBalance:'為避免動到鎖定或已配置的金額，無法安全補到 100%。請先解鎖一類或手動調整。',balancedDone:'已補到 100%，鎖定類別與已列支出都沒有被壓縮。',exported:'CSV 已下載',imported:'CSV 已匯入',importFailed:'CSV 格式無法辨識',snapshotDone:'快照已下載',noItems:'尚無項目',templateBlank:'空白 50／30／20',templateSalary30:'台灣 · 3 萬起薪',templateOffice:'台灣 · 一般上班族',templateRetirement:'台灣 · 退休準備',rent:'房租',utilities:'水電與瓦斯',internetPhone:'網路與手機',food:'伙食費',transport:'交通',outing:'出遊／社交',shopping:'購物',emergency:'緊急預備金',investment:'投資',medical:'醫療與保健',insurance:'保險',leisure:'休閒',retirementSaving:'退休準備',laborInsuranceItem:'勞保與就保（試算）',healthInsuranceItem:'健保自付（試算）',taxItem:'所得稅月平均（試算）',pensionItem:'勞退自提',csvCategory:'類別',csvPercent:'比例(%)',csvLocked:'鎖定',csvItem:'項目',csvAmount:'金額',netRemaining:'剩餘'},
+en:{exportCsv:'Export CSV',importCsv:'Import CSV',snapshot:'Snapshot',monthlyIncome:'Monthly income',grossMonthlyIncome:'Monthly income (gross)',totalExpenses:'Planned expenses',remaining:'Unallocated',starterTemplate:'Quick start',apply:'Apply template',payrollTitle:'Taiwan payroll estimate',payrollNote:'Estimate for a single employee using 2026 rules. Insurance brackets, dependants, and deductions change the actual result; verify against official sources. Item amounts remain editable.',disable:'Disable',grossSalary:'Gross monthly salary',pensionRate:'Voluntary pension (0–6%)',laborInsurance:'Labor + employment',healthInsurance:'Health insurance',monthlyTax:'Income tax / month',pensionSelf:'Pension contribution',budgetSlots:'Budget versions',saved:'Saved',allocationTotal:'Allocation total',balanced:'Exactly 100%',needsBalance:'{delta}% to fix',overBalance:'{delta}% over',safeBalance:'Safely balance',needs:'Needs',wants:'Wants',savings:'Savings / investing',needsSub:'Housing, insurance, food, and transport',wantsSub:'Fun, shopping, and flexible spending',savingsSub:'Emergency funds, investing, and goals',budget:'Budget',spent:'Listed',left:'Available',over:'Over',ok:'Within budget',lock:'Lock',unlock:'Unlock',lockTitle:'Safe balance will not change a locked category',itemPlaceholder:'Expense item',amountPlaceholder:'Amount',delete:'Delete',drag:'Drag to reorder',addItem:'+ Add item',emptySlot:'Not saved yet',active:'Active',load:'Load',clear:'Clear',page:'{page} / {pages}',defaultSlot:'Budget {n}',confirmClear:'Clear “{name}”? This cannot be undone.',cleared:'Budget cleared',currencyNoConvert:'Display currency changed. Existing numbers were not converted.',confirmTemplate:'Applying a template replaces this version’s income, ratios, and items. Continue?',templateApplied:'Template applied. Adjust salary and deductions above.',cannotBalance:'A safe 100% balance is not possible without changing a locked or already-funded category. Unlock one category or adjust it manually.',balancedDone:'Balanced to 100% without shrinking locked or already-funded categories.',exported:'CSV downloaded',imported:'CSV imported',importFailed:'CSV format was not recognized',snapshotDone:'Snapshot downloaded',noItems:'No items yet',templateBlank:'Blank 50 / 30 / 20',templateSalary30:'Taiwan · NT$30k starter',templateOffice:'Taiwan · Typical employee',templateRetirement:'Taiwan · Retirement planning',rent:'Rent',utilities:'Utilities and gas',internetPhone:'Internet and phone',food:'Food',transport:'Transport',outing:'Outings / social',shopping:'Shopping',emergency:'Emergency fund',investment:'Investing',medical:'Medical and health',insurance:'Insurance',leisure:'Leisure',retirementSaving:'Retirement savings',laborInsuranceItem:'Labor + employment insurance (estimate)',healthInsuranceItem:'Health insurance (estimate)',taxItem:'Monthly income tax (estimate)',pensionItem:'Voluntary pension',csvCategory:'Category',csvPercent:'Percent (%)',csvLocked:'Locked',csvItem:'Item',csvAmount:'Amount',netRemaining:'Remaining'}};
+const CAT_STYLE={n:{color:'#378ADD'},w:{color:'#1D9E75'},s:{color:'#D85A30'}},CURRENCY_SYMBOL={TWD:'NT$',USD:'$',JPY:'¥',EUR:'€',GBP:'£',CAD:'C$',AUD:'A$',KRW:'₩',SGD:'S$'},SLOT_COUNT=9,SLOT_PAGE_SIZE=3,LS_KEY='budgetsplit_slots_v2',LS_OLD='budgetsplit_slots',LS_ACTIVE='budgetsplit_active',LS_SETTINGS='budgetsplit_settings_v2',LS_BACKUP_PREFIX='budgetsplit_slots_v1_backup_';
+let migrationState={upgraded:0,backupKey:null},settings=loadSettings(),slots=loadSlots(),activeSlot=loadActive(),slotPage=Math.floor(activeSlot/SLOT_PAGE_SIZE),CATS=[],payroll={},lastAdjustedCI=null,saveTimer=null,toastTimer=null,sortables=[],initialized=false;
+function t(key,vars={}){let value=(I18N[settings.locale]||I18N['zh-TW'])[key]||I18N['zh-TW'][key]||key;return value.replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'')}function clone(v){return JSON.parse(JSON.stringify(v))}function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}function clamp(n,min,max){return Math.min(max,Math.max(min,Number(n)||0))}function makeCats(pcts=[50,30,20],locks=[false,false,false]){return['n','w','s'].map((id,i)=>({id,pct:pcts[i],locked:locks[i],items:[]}))}function defaultPayroll(){return{enabled:false,gross:50000,pensionRate:0}}function defaultSlot(i){return{name:t('defaultSlot',{n:i+1}),savedAt:null,income:50000,payroll:defaultPayroll(),cats:makeCats()}}
+function normalizeSavedAt(value){if(!value)return null;const direct=new Date(value);if(Number.isFinite(direct.getTime()))return direct.toISOString();const match=String(value).match(/(\d{1,2})\/(\d{1,2})\s*(上午|下午|AM|PM)?\s*(\d{1,2}):(\d{2})/i);if(!match)return null;let hour=Number(match[4]);const marker=(match[3]||'').toUpperCase();if((marker==='下午'||marker==='PM')&&hour<12)hour+=12;if((marker==='上午'||marker==='AM')&&hour===12)hour=0;const parsed=new Date(new Date().getFullYear(),Number(match[1])-1,Number(match[2]),hour,Number(match[5]));return Number.isFinite(parsed.getTime())?parsed.toISOString():null}
+function normalizeSlot(raw,i){const base=defaultSlot(i),source=raw&&typeof raw==='object'?raw:{};base.name=String(source.name||base.name);base.savedAt=normalizeSavedAt(source.savedAt);base.income=Number(source.income)||50000;base.payroll={...defaultPayroll(),...(source.payroll||{})};const incoming=Array.isArray(source.cats)?source.cats:[];base.cats=base.cats.map((cat,ci)=>{const found=incoming.find(c=>c&&c.id===cat.id)||incoming[ci]||{};return{id:cat.id,pct:clamp(found.pct??cat.pct,0,100),locked:Boolean(found.locked),items:Array.isArray(found.items)?found.items.map(entry=>({title:String(entry.title||entry.description||''),amount:entry.amount===''?'':Number(entry.amount)||0,...(entry.systemKey?{systemKey:entry.systemKey}:{}),...(entry.templateKey?{templateKey:entry.templateKey}:{})})):[]}});return base}
+function loadSettings(){try{return{locale:'zh-TW',currency:'TWD',...JSON.parse(localStorage.getItem(LS_SETTINGS)||'{}')}}catch(e){return{locale:'zh-TW',currency:'TWD'}}}
+function loadSlots(){let currentRaw=null,legacyRaw=null;try{currentRaw=localStorage.getItem(LS_KEY);if(currentRaw){const current=JSON.parse(currentRaw),arr=Array.isArray(current)?current:[];return Array.from({length:SLOT_COUNT},(_,i)=>normalizeSlot(arr[i],i))}legacyRaw=localStorage.getItem(LS_OLD);if(legacyRaw){const legacy=JSON.parse(legacyRaw),arr=Array.isArray(legacy)?legacy:[],migrated=Array.from({length:SLOT_COUNT},(_,i)=>normalizeSlot(arr[i],i)),backupKey=LS_BACKUP_PREFIX+new Date().toISOString().replace(/[:.]/g,'-');try{localStorage.setItem(backupKey,legacyRaw)}catch(e){}localStorage.setItem(LS_KEY,JSON.stringify(migrated));migrationState={upgraded:arr.filter(Boolean).length,backupKey};return migrated}}catch(e){}return Array.from({length:SLOT_COUNT},(_,i)=>defaultSlot(i))}
+function loadActive(){let value=0;try{value=parseInt(localStorage.getItem(LS_ACTIVE),10)||0}catch(e){}return clamp(value,0,SLOT_COUNT-1)}function saveSettings(){try{localStorage.setItem(LS_SETTINGS,JSON.stringify(settings))}catch(e){}}
+function saveNow(show=true){clearTimeout(saveTimer);saveTimer=null;if(initialized){slots[activeSlot].income=income();slots[activeSlot].cats=clone(CATS);slots[activeSlot].payroll=clone(payroll);slots[activeSlot].savedAt=new Date().toISOString()}try{localStorage.setItem(LS_KEY,JSON.stringify(slots));localStorage.setItem(LS_ACTIVE,String(activeSlot))}catch(e){}if(show)showSaveIndicator()}function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveNow(true),650)}function showSaveIndicator(){const el=document.getElementById('saveIndicator');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500)}function showToast(message){const el=document.getElementById('toast');clearTimeout(toastTimer);el.textContent=message;el.classList.add('show');toastTimer=setTimeout(()=>el.classList.remove('show'),2400)}
+function income(){return Math.max(0,parseFloat(document.getElementById('income').value)||0)}function catSpent(cat){return cat.items.reduce((sum,entry)=>sum+(parseFloat(entry.amount)||0),0)}function catBudget(cat){return income()*cat.pct/100}function fmt(value){try{return new Intl.NumberFormat(settings.locale,{style:'currency',currency:settings.currency,maximumFractionDigits:['JPY','KRW','TWD'].includes(settings.currency)?0:2}).format(Math.round((Number(value)||0)*100)/100)}catch(e){return CURRENCY_SYMBOL[settings.currency]+Math.round(Number(value)||0).toLocaleString()}}function moneyStep(){return['JPY','KRW','TWD'].includes(settings.currency)?100:1}function setSliderFill(slider,color){const pct=clamp(slider.value,0,100);slider.style.background=`linear-gradient(to right,${color} 0%,${color} ${pct}%,#e8e8e5 ${pct}%,#e8e8e5 100%)`}function catLabel(id){return t(id==='n'?'needs':id==='w'?'wants':'savings')}function catSub(id){return t(id==='n'?'needsSub':id==='w'?'wantsSub':'savingsSub')}function localizeItems(){CATS.forEach(cat=>cat.items.forEach(entry=>{if(entry.templateKey)entry.title=t(entry.templateKey)}))}
+function applyTranslations(){document.documentElement.lang=settings.locale;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));document.getElementById('incomeLabel').textContent=t(payroll.enabled?'grossMonthlyIncome':'monthlyIncome');document.getElementById('currencySymbol').textContent=CURRENCY_SYMBOL[settings.currency]||settings.currency;document.getElementById('language').value=settings.locale;document.getElementById('currency').value=settings.currency;renderTemplateOptions();renderLegend()}function renderTemplateOptions(){const select=document.getElementById('templateSelect'),current=select.value||'blank';select.innerHTML=[['blank','templateBlank'],['salary30','templateSalary30'],['office','templateOffice'],['retirement','templateRetirement']].map(([v,k])=>`<option value="${v}">${t(k)}</option>`).join('');select.value=current}function renderLegend(){document.getElementById('legend').innerHTML=['n','w','s'].map(id=>`<span><span class="legend-dot" style="background:${CAT_STYLE[id].color}"></span>${esc(catLabel(id))}</span>`).join('')}
+function hydrateSlot(i){if(initialized)saveNow(false);activeSlot=clamp(i,0,SLOT_COUNT-1);slotPage=Math.floor(activeSlot/SLOT_PAGE_SIZE);const slot=slots[activeSlot];CATS=clone(slot.cats);payroll={...defaultPayroll(),...clone(slot.payroll)};lastAdjustedCI=null;document.getElementById('income').value=slot.income;document.getElementById('grossIncome').value=payroll.gross||slot.income;document.getElementById('pensionRate').value=payroll.pensionRate||0;document.getElementById('pensionSlider').value=payroll.pensionRate||0;initialized=true;applyTranslations();renderPayroll();renderSlots();render();saveNow(false)}
+function renderSlots(){const start=slotPage*SLOT_PAGE_SIZE,end=start+SLOT_PAGE_SIZE,el=document.getElementById('slots');el.innerHTML='';slots.slice(start,end).forEach((slot,offset)=>{const i=start+offset,div=document.createElement('article');div.className='slot'+(i===activeSlot?' active':'');div.tabIndex=0;div.dataset.slot=i;const saved=slot.savedAt?new Intl.DateTimeFormat(settings.locale,{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(slot.savedAt)):t('emptySlot');div.innerHTML=`<input class="slot-name-input" type="text" value="${esc(slot.name)}" data-name="${i}" ${i!==activeSlot?'readonly':''}><div class="slot-meta">${esc(saved)}</div><div class="slot-actions">${i!==activeSlot?`<button class="slot-btn" data-load="${i}">${t('load')}</button>`:`<span style="font-size:10px;color:#378ADD;font-weight:700">${t('active')}</span>`}<button class="slot-btn danger" data-clear="${i}">${t('clear')}</button></div>`;el.appendChild(div)});const pages=Math.ceil(SLOT_COUNT/SLOT_PAGE_SIZE);document.getElementById('slotPageLabel').textContent=t('page',{page:slotPage+1,pages});document.getElementById('prevSlots').disabled=slotPage===0;document.getElementById('nextSlots').disabled=slotPage===pages-1;el.querySelectorAll('.slot').forEach(card=>{card.addEventListener('click',e=>{if(e.target.closest('button')||e.target.matches('input'))return;hydrateSlot(+card.dataset.slot)});card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!e.target.matches('input')){e.preventDefault();hydrateSlot(+card.dataset.slot)}})});el.querySelectorAll('[data-name]').forEach(input=>input.addEventListener('input',e=>{slots[+e.target.dataset.name].name=e.target.value;saveNow(false)}));el.querySelectorAll('[data-load]').forEach(button=>button.addEventListener('click',()=>hydrateSlot(+button.dataset.load)));el.querySelectorAll('[data-clear]').forEach(button=>button.addEventListener('click',()=>{const i=+button.dataset.clear;if(!confirm(t('confirmClear',{name:slots[i].name})))return;slots[i]=defaultSlot(i);if(i===activeSlot)hydrateSlot(i);else{saveNow(false);renderSlots()}showToast(t('cleared'))}))}
+function estimateTaiwanTax(annualGross){const taxable=Math.max(0,annualGross-101000-136000-227000);if(taxable<=610000)return taxable*.05;if(taxable<=1380000)return taxable*.12-42700;if(taxable<=2770000)return taxable*.20-153100;if(taxable<=5190000)return taxable*.30-430100;return taxable*.40-949100}function payrollValues(){const gross=Math.max(0,Number(payroll.gross)||0),pensionRate=clamp(payroll.pensionRate,0,6);return{gross,pension:Math.round(gross*pensionRate/100),health:Math.round(gross*.0517*.30),labor:Math.round(gross*.135*.20),tax:Math.max(0,Math.round(estimateTaiwanTax(gross*12)/12))}}function upsertSystemItem(catId,systemKey,templateKey,amount){const cat=CATS.find(c=>c.id===catId);let entry=cat.items.find(v=>v.systemKey===systemKey);if(!entry){entry={title:t(templateKey),amount,systemKey,templateKey};cat.items.unshift(entry)}else{entry.title=t(templateKey);entry.amount=amount;entry.templateKey=templateKey}}function syncPayrollItems(){if(!payroll.enabled)return;const values=payrollValues();upsertSystemItem('n','labor','laborInsuranceItem',values.labor);upsertSystemItem('n','health','healthInsuranceItem',values.health);upsertSystemItem('n','tax','taxItem',values.tax);upsertSystemItem('s','pension','pensionItem',values.pension)}
+function renderPayroll(){const panel=document.getElementById('payrollPanel');panel.hidden=!payroll.enabled;document.getElementById('incomeLabel').textContent=t(payroll.enabled?'grossMonthlyIncome':'monthlyIncome');if(!payroll.enabled)return;const values=payrollValues();document.getElementById('grossIncome').value=values.gross;document.getElementById('pensionSlider').value=payroll.pensionRate;document.getElementById('pensionRate').value=payroll.pensionRate;document.getElementById('laborValue').textContent=fmt(values.labor);document.getElementById('healthValue').textContent=fmt(values.health);document.getElementById('taxValue').textContent=fmt(values.tax);document.getElementById('pensionValue').textContent=fmt(values.pension)}
+function item(templateKey,amount){return{title:t(templateKey),templateKey,amount}}function templateData(id){if(id==='salary30')return{income:30000,pcts:[65,15,20],locks:[true,false,false],payroll:{enabled:true,gross:30000,pensionRate:0},items:{n:[item('rent',8500),item('utilities',1200),item('internetPhone',599),item('food',6000),item('transport',1200)],w:[item('outing',1500),item('shopping',1000)],s:[item('emergency',2500),item('investment',1000)]}};if(id==='office')return{income:50000,pcts:[60,18,22],locks:[true,false,false],payroll:{enabled:true,gross:50000,pensionRate:6},items:{n:[item('rent',14000),item('utilities',1800),item('internetPhone',1000),item('food',9000),item('transport',2500)],w:[item('outing',3500),item('shopping',2500)],s:[item('emergency',3500),item('investment',4000)]}};if(id==='retirement')return{income:40000,pcts:[65,15,20],locks:[true,false,false],payroll:defaultPayroll(),items:{n:[item('rent',12000),item('utilities',2000),item('food',8000),item('medical',3000),item('insurance',2000),item('transport',1500)],w:[item('leisure',3000),item('outing',1500)],s:[item('retirementSaving',6000),item('emergency',2000)]}};return{income:50000,pcts:[50,30,20],locks:[false,false,false],payroll:defaultPayroll(),items:{n:[],w:[],s:[]}}}
+function applyTemplate(){const id=document.getElementById('templateSelect').value;if((CATS.some(c=>c.items.length)||income()!==50000)&&!confirm(t('confirmTemplate')))return;const data=templateData(id);settings.currency=id==='blank'?settings.currency:'TWD';saveSettings();CATS=makeCats(data.pcts,data.locks);CATS.forEach(cat=>cat.items=clone(data.items[cat.id]||[]));payroll=clone(data.payroll);document.getElementById('income').value=data.income;if(payroll.enabled)syncPayrollItems();applyTranslations();renderPayroll();render();renderSlots();showToast(t('templateApplied'))}
+function render(){renderCats();updateSummary()}function renderCats(){sortables.forEach(s=>{try{s.destroy()}catch(e){}});sortables=[];const el=document.getElementById('cats');el.innerHTML='';CATS.forEach((cat,ci)=>{const budget=catBudget(cat),spent=catSpent(cat),over=spent>budget,pctUsed=budget>0?Math.min(spent/budget*100,100):0,card=document.createElement('article');card.className='cat-card';card.id='cat-card-'+ci;card.innerHTML=`<div class="cat-head"><span class="dot" style="background:${CAT_STYLE[cat.id].color}"></span><span class="cat-name">${esc(catLabel(cat.id))}</span><span class="pct-badge" style="background:${CAT_STYLE[cat.id].color}">${cat.pct}%</span><span class="status-tag ${over?'over-tag':'ok-tag'}">${t(over?'over':'ok')}</span><button class="lock-btn ${cat.locked?'locked':''}" data-lock="${ci}" title="${esc(t('lockTitle'))}" aria-pressed="${cat.locked}">${cat.locked?'🔒 '+t('unlock'):'🔓 '+t('lock')}</button></div><div class="cat-sub">${esc(catSub(cat.id))}</div><div class="slider-wrap" style="--ac:${CAT_STYLE[cat.id].color}"><input type="range" min="0" max="100" step="1" value="${cat.pct}" data-range="${ci}" ${cat.locked?'disabled':''}><span class="pct-num">${cat.pct}%</span></div><div class="budget-row"><span>${t('budget')} <strong class="b-budget">${fmt(budget)}</strong></span><span>${t('spent')} <strong class="b-spent" style="color:${over?'#e24b4a':CAT_STYLE[cat.id].color}">${fmt(spent)}</strong></span><span class="b-left">${t('left')} ${fmt(budget-spent)}</span></div><div class="progress-bg"><div class="progress-fill" style="width:${pctUsed}%;background:${over?'#e24b4a':CAT_STYLE[cat.id].color}"></div></div><div class="items" data-ci="${ci}">${cat.items.map((entry,ii)=>`<div class="item-row"><span class="drag-handle" title="${t('drag')}" aria-label="${t('drag')}">⠿</span><input type="text" value="${esc(entry.title)}" placeholder="${t('itemPlaceholder')}" data-ci="${ci}" data-ii="${ii}" data-field="title"><input type="number" value="${entry.amount??''}" placeholder="${t('amountPlaceholder')}" min="0" step="${moneyStep()}" inputmode="decimal" data-ci="${ci}" data-ii="${ii}" data-field="amount"><button class="del-btn" data-delete="${ci}-${ii}" title="${t('delete')}" aria-label="${t('delete')}">×</button></div>`).join('')}</div><button class="add-btn" data-add="${ci}">${t('addItem')}</button>`;el.appendChild(card);setSliderFill(card.querySelector('[data-range]'),CAT_STYLE[cat.id].color);const itemsEl=card.querySelector('.items');if(typeof Sortable!=='undefined')sortables.push(Sortable.create(itemsEl,{handle:'.drag-handle',animation:150,delay:120,delayOnTouchOnly:true,touchStartThreshold:5,fallbackOnBody:true,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',onEnd(evt){if(evt.oldIndex===evt.newIndex)return;const arr=CATS[ci].items,[moved]=arr.splice(evt.oldIndex,1);arr.splice(evt.newIndex,0,moved);render()}}))});attachCatEvents()}
+function attachCatEvents(){const el=document.getElementById('cats');el.querySelectorAll('[data-range]').forEach(range=>range.addEventListener('input',e=>{const ci=+e.target.dataset.range;lastAdjustedCI=ci;CATS[ci].pct=+e.target.value;setSliderFill(e.target,CAT_STYLE[CATS[ci].id].color);updateSummary()}));el.querySelectorAll('[data-field]').forEach(input=>input.addEventListener('input',e=>{const entry=CATS[+e.target.dataset.ci].items[+e.target.dataset.ii],field=e.target.dataset.field;entry[field]=e.target.value;if(field==='title'){delete entry.templateKey;delete entry.systemKey}updateSummary()}));el.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',()=>{const[ci,ii]=button.dataset.delete.split('-').map(Number);CATS[ci].items.splice(ii,1);render()}));el.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>{const ci=+button.dataset.add;CATS[ci].items.push({title:'',amount:''});render();setTimeout(()=>document.querySelector(`#cat-card-${ci} .item-row:last-child input`).focus(),0)}));el.querySelectorAll('[data-lock]').forEach(button=>button.addEventListener('click',()=>{const ci=+button.dataset.lock;CATS[ci].locked=!CATS[ci].locked;lastAdjustedCI=null;render()}))}
+function updateSummary(){const inc=income(),spent=CATS.reduce((sum,cat)=>sum+catSpent(cat),0),left=inc-spent,totalPct=CATS.reduce((sum,cat)=>sum+cat.pct,0),delta=100-totalPct;document.getElementById('s-inc').textContent=fmt(inc);document.getElementById('s-spend').textContent=fmt(spent);const leftEl=document.getElementById('s-left');leftEl.textContent=fmt(left);leftEl.style.color=left<0?'#d04543':'#1a1a1a';document.getElementById('s-left-sub').textContent=inc?Math.round(left/inc*100)+'%':'—';document.getElementById('allocationTotal').textContent=totalPct+'%';const status=document.getElementById('allocationStatus');status.textContent=delta===0?t('balanced'):t(delta>0?'needsBalance':'overBalance',{delta:Math.abs(delta)});status.className='allocation-status '+(delta===0?'ok':'bad');const warn=document.getElementById('warn');warn.style.display=delta===0?'none':'flex';document.getElementById('warnText').textContent=delta>0?`${Math.abs(delta)}% ${settings.locale==='zh-TW'?'尚未分配':'unallocated'}`:`${Math.abs(delta)}% ${settings.locale==='zh-TW'?'超出 100%':'over 100%'}`;CATS.forEach((cat,ci)=>{document.getElementById('bar-'+cat.id).style.width=cat.pct+'%';const card=document.getElementById('cat-card-'+ci);if(!card)return;const budget=catBudget(cat),used=catSpent(cat),over=used>budget,pctUsed=budget>0?Math.min(used/budget*100,100):0;card.querySelector('.pct-badge').textContent=cat.pct+'%';card.querySelector('.pct-num').textContent=cat.pct+'%';card.querySelector('.b-budget').textContent=fmt(budget);const spentEl=card.querySelector('.b-spent');spentEl.textContent=fmt(used);spentEl.style.color=over?'#e24b4a':CAT_STYLE[cat.id].color;card.querySelector('.b-left').textContent=t('left')+' '+fmt(budget-used);const tag=card.querySelector('.status-tag');tag.className='status-tag '+(over?'over-tag':'ok-tag');tag.textContent=t(over?'over':'ok');const fill=card.querySelector('.progress-fill');fill.style.width=pctUsed+'%';fill.style.background=over?'#e24b4a':CAT_STYLE[cat.id].color});scheduleSave()}
+function normalizePcts(){const total=CATS.reduce((sum,c)=>sum+c.pct,0);if(total===100)return;let remaining=100-total,next=CATS.map(c=>c.pct),candidates=CATS.map((c,i)=>({c,i})).filter(({c,i})=>!c.locked&&i!==lastAdjustedCI);if(!candidates.length)candidates=CATS.map((c,i)=>({c,i})).filter(({c})=>!c.locked);if(remaining>0){const priority=['s','w','n'];candidates.sort((a,b)=>priority.indexOf(a.c.id)-priority.indexOf(b.c.id));for(const{i}of candidates){const add=Math.min(remaining,100-next[i]);next[i]+=add;remaining-=add;if(!remaining)break}}else{let need=-remaining;const priority=['s','w','n'];candidates.sort((a,b)=>priority.indexOf(a.c.id)-priority.indexOf(b.c.id));for(const{c,i}of candidates){const floor=income()>0?Math.ceil(catSpent(c)/income()*100):0,room=Math.max(0,next[i]-floor),take=Math.min(need,room);next[i]-=take;need-=take;if(!need)break}remaining=-need}if(remaining!==0){showToast(t('cannotBalance'));return}CATS.forEach((cat,i)=>cat.pct=next[i]);lastAdjustedCI=null;render();showToast(t('balancedDone'))}
+function csvEscape(value){const s=String(value??'');return/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}function parseCSVLine(line){const out=[];let value='',quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(quoted&&line[i+1]==='"'){value+='"';i++}else quoted=!quoted}else if(ch===','&&!quoted){out.push(value);value=''}else value+=ch}out.push(value);return out}function exportCSV(){const rows=[['BudgetSplit','2'],['locale',settings.locale],['currency',settings.currency],['income',income()],['payroll',JSON.stringify(payroll)],[],[t('csvCategory'),t('csvPercent'),t('csvLocked'),t('csvItem'),t('csvAmount'),'category_id','system_key']];CATS.forEach(cat=>{if(!cat.items.length)rows.push([catLabel(cat.id),cat.pct,cat.locked?'1':'0','','',cat.id,'']);else cat.items.forEach((entry,index)=>rows.push([index===0?catLabel(cat.id):'',index===0?cat.pct:'',index===0?(cat.locked?'1':'0'):'',entry.title,entry.amount||0,cat.id,entry.systemKey||'']))});rows.push([],['summary','','',t('totalExpenses'),CATS.reduce((sum,c)=>sum+catSpent(c),0)],['summary','','',t('netRemaining'),income()-CATS.reduce((sum,c)=>sum+catSpent(c),0)]);downloadBlob('\uFEFF'+rows.map(row=>row.map(csvEscape).join(',')).join('\r\n'),'text/csv;charset=utf-8',fileName('csv'));showToast(t('exported'))}
+function parseMoney(value){const parsed=Number(String(value??'').replace(/[^0-9.-]/g,''));return Number.isFinite(parsed)?parsed:0}
+function legacyCatId(label){const key=String(label||'').trim().toLowerCase().replace(/\s+/g,'').replace(/／/g,'/');return({'必要支出':'n','想要支出':'w','儲蓄與投資':'s','儲蓄/投資':'s','needs':'n','wants':'w','savings':'s','savings/investing':'s','savings&investing':'s'})[key]||null}
+function parseV2Budget(rows){const incoming=makeCats();let newIncome=50000,newPayroll=defaultPayroll(),currency=settings.currency;rows.forEach(row=>{if(row[0]==='currency')currency=row[1]||currency;if(row[0]==='income')newIncome=parseMoney(row[1])||newIncome;if(row[0]==='payroll'){try{newPayroll={...defaultPayroll(),...JSON.parse(row[1])}}catch(e){}}const id=row[5];if(!CAT_STYLE[id])return;const cat=incoming.find(c=>c.id===id);if(row[1]!==''&&Number.isFinite(Number(row[1])))cat.pct=clamp(row[1],0,100);if(row[2]!=='')cat.locked=row[2]==='1';if(row[3]!==''||row[4]!=='')cat.items.push({title:String(row[3]||''),amount:parseMoney(row[4]),...(row[6]?{systemKey:row[6]}:{})})});return{cats:incoming,income:newIncome,payroll:newPayroll,currency,legacy:false}}
+function parseLegacyBudget(rows){const incoming=makeCats(),incomeKeys=['月收入','每月收入','monthly income','income'],skipItems=['說明','項目','總支出','結餘','剩餘','description','item','total expenses','remaining'];let newIncome=0,lastId=null,recognized=0;rows.forEach(row=>{const first=String(row[0]||'').trim(),fourth=String(row[3]||'').trim(),lowerFirst=first.toLowerCase(),lowerFourth=fourth.toLowerCase();if(incomeKeys.includes(lowerFirst)||incomeKeys.includes(first)){newIncome=parseMoney(row[1]);return}const mapped=legacyCatId(first);if(mapped){lastId=mapped;recognized++;const cat=incoming.find(c=>c.id===mapped);if(row[1]!==''&&Number.isFinite(Number(row[1])))cat.pct=clamp(row[1],0,100)}if(first==='[摘要]'||lowerFirst==='[summary]'||skipItems.includes(lowerFourth)||skipItems.includes(fourth))return;if(lastId&&row.length>=5&&(fourth!==''||row[4]!=='')){incoming.find(c=>c.id===lastId).items.push({title:fourth,amount:parseMoney(row[4])})}});if(!recognized)throw new Error('unrecognized legacy CSV');return{cats:incoming,income:newIncome||50000,payroll:defaultPayroll(),currency:'TWD',legacy:true}}
+function parseImportedBudget(rows){return rows[0]?.[0]==='BudgetSplit'?parseV2Budget(rows):parseLegacyBudget(rows)}
+function importCSV(file){const reader=new FileReader();reader.onload=event=>{try{const text=String(event.target.result||'').replace(/^\uFEFF/,''),rows=text.split(/\r?\n/).map(parseCSVLine),data=parseImportedBudget(rows);settings.currency=data.currency;saveSettings();CATS=data.cats;payroll=data.payroll;document.getElementById('income').value=data.income;slots[activeSlot].name=file.name.replace(/\.csv$/i,'').replace(/_\d{8}$/,'').trim()||slots[activeSlot].name;applyTranslations();renderPayroll();render();renderSlots();showToast(data.legacy?(settings.locale==='zh-TW'?'舊版 CSV 已轉換並匯入':'Legacy CSV converted and imported'):t('imported'))}catch(err){showToast(t('importFailed'))}document.getElementById('fileInput').value=''};reader.readAsText(file,'UTF-8')}
+function fileName(ext){const date=new Date(),stamp=`${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}`,name=(slots[activeSlot].name||'BudgetSplit').replace(/[\\/:*?"<>|]/g,'_');return`${name}_${stamp}.${ext}`}function downloadBlob(data,type,name){const blob=data instanceof Blob?data:new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),500)}
+function exportSnapshot(){const width=700,pad=42,rowH=28,items=CATS.reduce((n,c)=>n+Math.max(1,c.items.length),0),height=245+items*rowH+CATS.length*62,scale=2,canvas=document.createElement('canvas');canvas.width=width*scale;canvas.height=height*scale;const ctx=canvas.getContext('2d');ctx.scale(scale,scale);ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.textBaseline='middle';let y=45;ctx.fillStyle='#111';ctx.font='700 24px system-ui';ctx.fillText(slots[activeSlot].name||'BudgetSplit',pad,y);ctx.textAlign='right';ctx.font='13px system-ui';ctx.fillStyle='#888';ctx.fillText(new Date().toLocaleDateString(settings.locale),width-pad,y);ctx.textAlign='left';y+=40;ctx.font='14px system-ui';ctx.fillStyle='#666';ctx.fillText(t('monthlyIncome'),pad,y);ctx.textAlign='right';ctx.font='700 19px system-ui';ctx.fillStyle='#111';ctx.fillText(fmt(income()),width-pad,y);ctx.textAlign='left';y+=35;let x=pad,barWidth=width-pad*2;CATS.forEach(cat=>{ctx.fillStyle=CAT_STYLE[cat.id].color;const w=barWidth*cat.pct/100;ctx.fillRect(x,y,w,14);x+=w});y+=45;CATS.forEach(cat=>{ctx.fillStyle=CAT_STYLE[cat.id].color;ctx.beginPath();ctx.arc(pad+5,y,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.font='700 15px system-ui';ctx.fillText(`${catLabel(cat.id)}  ${cat.pct}%`,pad+18,y);ctx.textAlign='right';ctx.font='12px system-ui';ctx.fillStyle='#666';ctx.fillText(`${t('budget')} ${fmt(catBudget(cat))}`,width-pad,y);ctx.textAlign='left';y+=28;const list=cat.items.length?cat.items:[{title:t('noItems'),amount:''}];list.forEach(entry=>{ctx.fillStyle=entry.amount===''?'#aaa':'#444';ctx.font='13px system-ui';ctx.fillText(entry.title||t('itemPlaceholder'),pad+18,y);if(entry.amount!==''){ctx.textAlign='right';ctx.fillStyle='#222';ctx.fillText(fmt(entry.amount),width-pad,y);ctx.textAlign='left'}y+=rowH});y+=18;ctx.strokeStyle='#eee';ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(width-pad,y);ctx.stroke();y+=25});const total=CATS.reduce((sum,c)=>sum+catSpent(c),0);ctx.font='700 15px system-ui';ctx.fillStyle='#555';ctx.fillText(t('totalExpenses'),pad,y);ctx.textAlign='right';ctx.fillStyle='#111';ctx.fillText(fmt(total),width-pad,y);y+=30;ctx.textAlign='left';ctx.fillStyle='#555';ctx.fillText(t('remaining'),pad,y);ctx.textAlign='right';ctx.fillStyle=income()-total<0?'#d04543':'#1d9e75';ctx.font='700 18px system-ui';ctx.fillText(fmt(income()-total),width-pad,y);canvas.toBlob(blob=>{downloadBlob(blob,'image/png',fileName('png'));showToast(t('snapshotDone'))},'image/png')}
+document.getElementById('language').addEventListener('change',e=>{settings.locale=e.target.value;saveSettings();localizeItems();applyTranslations();renderPayroll();render();renderSlots()});document.getElementById('currency').addEventListener('change',e=>{settings.currency=e.target.value;saveSettings();applyTranslations();renderPayroll();render();showToast(t('currencyNoConvert'))});document.getElementById('income').addEventListener('input',e=>{if(payroll.enabled){payroll.gross=Number(e.target.value)||0;syncPayrollItems();renderPayroll();render()}else updateSummary()});document.getElementById('grossIncome').addEventListener('input',e=>{payroll.gross=Math.max(0,Number(e.target.value)||0);document.getElementById('income').value=payroll.gross;syncPayrollItems();renderPayroll();render()});function setPensionRate(value){payroll.pensionRate=clamp(value,0,6);document.getElementById('pensionSlider').value=payroll.pensionRate;document.getElementById('pensionRate').value=payroll.pensionRate;syncPayrollItems();renderPayroll();render()}document.getElementById('pensionSlider').addEventListener('input',e=>setPensionRate(e.target.value));document.getElementById('pensionRate').addEventListener('input',e=>setPensionRate(e.target.value));document.getElementById('closePayrollBtn').addEventListener('click',()=>{payroll.enabled=false;applyTranslations();renderPayroll();scheduleSave()});document.getElementById('applyTemplateBtn').addEventListener('click',applyTemplate);document.getElementById('prevSlots').addEventListener('click',()=>{if(slotPage>0){slotPage--;renderSlots()}});document.getElementById('nextSlots').addEventListener('click',()=>{if(slotPage<Math.ceil(SLOT_COUNT/SLOT_PAGE_SIZE)-1){slotPage++;renderSlots()}});document.getElementById('normalizeBtn').addEventListener('click',normalizePcts);document.getElementById('exportBtn').addEventListener('click',exportCSV);document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])importCSV(e.target.files[0])});document.getElementById('snapshotBtn').addEventListener('click',exportSnapshot);window.addEventListener('beforeunload',()=>saveNow(false));hydrateSlot(activeSlot);if(migrationState.upgraded)setTimeout(()=>showToast(settings.locale==='zh-TW'?`已升級 ${migrationState.upgraded} 個舊版預算，原始備份已保留`:`Upgraded ${migrationState.upgraded} legacy budgets; backup preserved`),0);
 </script>
 </body>
 </html>
